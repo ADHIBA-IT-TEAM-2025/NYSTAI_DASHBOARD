@@ -9,10 +9,16 @@ export default defineConfig({
     svgr({
       svgrOptions: {
         icon: true,
-        // This will transform your SVG to a React component
         exportType: "named",
         namedExport: "ReactComponent",
       },
     }),
   ],
+  base: "/", // Ensure correct base path for SPA deployment
+  build: {
+    outDir: "dist",
+  },
+  server: {
+    historyApiFallback: true, // Dev server handles React Router fallback
+  },
 });
