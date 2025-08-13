@@ -1,7 +1,7 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import svgr from "vite-plugin-svgr";
-// https://vite.dev/config/
+
 export default defineConfig({
   plugins: [
     react(),
@@ -13,11 +13,15 @@ export default defineConfig({
       },
     }),
   ],
-  base: "/", // Ensure correct base path for SPA deployment
+  base: "/", // <-- Important: base path for your app
   build: {
     outDir: "dist",
   },
   server: {
-    historyApiFallback: true, // Dev server handles React Router fallback
+    port: 5173,
+    open: true,
+  },
+  preview: {
+    port: 5173,
   },
 });
