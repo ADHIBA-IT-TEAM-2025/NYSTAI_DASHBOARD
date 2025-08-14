@@ -21,6 +21,7 @@ import AllCourses from "./components/Courses/AllCourses";
 import CourseDetail from "./components/Courses/Coursesdetails";
 import AllPricing from "./components/Pricing/allPricing";
 import Studentcertification from "./components/studentlist/CertificateStatus";
+import StudentEditForm from "./components/form/editstudentform/editstudentform.tsx";
 import ContactGrid from "./components/ContactGrid/ContactGrid";
 import { Toaster } from "react-hot-toast";
 import TutorList from "./components/trainer/TutorList";
@@ -69,6 +70,7 @@ export default function App() {
             {/* {student list} */}
             <Route path="/studentlist" element={<Studentlist />} />
             <Route path="/student/:id" element={<Studentcertification />} />
+            <Route path="/Editstudentform/:id" element={<StudentEditForm />} />
             {/* Ui Elements */}
             <Route path="/alerts" element={<Alerts />} />
             <Route path="/avatars" element={<Avatars />} />

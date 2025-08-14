@@ -1,9 +1,7 @@
 import Label from "../Label.tsx";
 import Input from "../input/InputField.tsx";
 import DatePicker from "../date-picker.tsx";
-import {
-  faChevronDown
-} from "@fortawesome/free-solid-svg-icons";
+import { faChevronDown } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useState, useRef, useEffect } from "react";
 import { useDropzone } from "react-dropzone";
@@ -61,9 +59,13 @@ export default function StudentAddForm() {
     }
 
     // Append text fields
-    for (const key in formData) {
-      data.append(key, formData[key as keyof typeof formData]);
-    }
+for (const key in formData) {
+  const value = formData[key as keyof typeof formData];
+  if (value !== undefined && value !== null && value !== "") {
+    data.append(key, value as string | Blob);
+  }
+}
+
 
     if (
       !documents.passport_photo ||
@@ -92,6 +94,11 @@ export default function StudentAddForm() {
         throw new Error(result.error || "Upload failed");
       }
 
+
+      // ONLY set the array, not the whole response object
+      setFormData(result.data);
+
+
       toast.success("Student inserted! ID: " + result.student_id);
     } catch (err: any) {
       if (err.response && err.response.status === 422) {
@@ -108,6 +115,11 @@ export default function StudentAddForm() {
         toast.error("Error uploading student");
       }
     }
+for (let [key, value] of data.entries()) {
+  console.log(key, value);
+}
+
+
 
   };
 
@@ -124,10 +136,14 @@ export default function StudentAddForm() {
       newErrors.name = "Name must be 4–30 letters only";
     }
 
-    if (!formData.last_name.trim()) {
-      newErrors.last_name = "Last name is required";
-    } else if (!/^[A-Za-z]{4,30}$/.test(formData.last_name)) {
-      newErrors.last_name = "Last name must be 4–30 letters only";
+    // if (!formData.last_name.trim()) {
+    //   newErrors.last_name = "Last name is required";
+    // } else if (!/^[A-Za-z]{4,30}$/.test(formData.last_name)) {
+    //   newErrors.last_name = "Last name must be 4–30 letters only";
+    // }
+
+    if (!formData.last_name) {
+      newErrors.last_name = "last Name is required";
     }
 
     if (!formData.dob) {
@@ -162,7 +178,7 @@ export default function StudentAddForm() {
     }
 
 
-    if (!/^\d{12}$/.test(formData.aadhar_number)) {
+    if (!/^\d{12}$/.test(formData.aadhar_number || '')) {
       newErrors.aadhar_number = "Aadhar must be 12 digits";
     }
 
@@ -303,12 +319,22 @@ export default function StudentAddForm() {
                     value={formData.dob ? new Date(formData.dob) : undefined}
                     onChange={(date) => {
                       const selectedDate = Array.isArray(date) ? date[0] : date;
-                      setFormData({
-                        ...formData,
-                        dob: selectedDate
-                          ? selectedDate.toISOString().split("T")[0]
-                          : "",
-                      });
+
+                      if (selectedDate) {
+                        const year = selectedDate.getFullYear();
+                        const month = String(selectedDate.getMonth() + 1).padStart(2, "0");
+                        const day = String(selectedDate.getDate()).padStart(2, "0");
+
+                        setFormData({
+                          ...formData,
+                          dob: `${year}-${month}-${day}`, // ✅ Local date, no timezone shift
+                        });
+                      } else {
+                        setFormData({
+                          ...formData,
+                          dob: "",
+                        });
+                      }
                     }}
                   />
                   {errors.dob && (
@@ -316,6 +342,7 @@ export default function StudentAddForm() {
                   )}
                 </div>
               </div>
+
 
 
               <div className="space-y-6">
@@ -629,10 +656,20 @@ export default function StudentAddForm() {
                   label="Join Date"
                   placeholder="Select a date"
                   minDate={new Date()}
+                  value={
+                    formData.join_date && !isNaN(Date.parse(formData.join_date))
+                      ? new Date(formData.join_date)
+                      : undefined
+                  }
                   onChange={(date) => {
                     const selectedDate = Array.isArray(date) ? date[0] : date;
                     if (selectedDate instanceof Date && !isNaN(selectedDate.getTime())) {
-                      const formattedDate = selectedDate.toISOString().split("T")[0];
+                      // Format date in local timezone (YYYY-MM-DD)
+                      const year = selectedDate.getFullYear();
+                      const month = String(selectedDate.getMonth() + 1).padStart(2, "0");
+                      const day = String(selectedDate.getDate()).padStart(2, "0");
+                      const formattedDate = `${year}-${month}-${day}`;
+
                       setFormData((prev) => ({
                         ...prev,
                         join_date: formattedDate,
@@ -646,26 +683,40 @@ export default function StudentAddForm() {
                 )}
               </div>
 
+
               <div className="space-y-2">
                 <DatePicker
                   id="end-date-picker"
                   label="End Date"
                   placeholder="Select a date"
                   minDate={new Date()}
+                  value={
+                    formData.end_date && !isNaN(Date.parse(formData.end_date))
+                      ? new Date(formData.end_date)
+                      : undefined
+                  }
                   onChange={(date) => {
                     const selectedDate = Array.isArray(date) ? date[0] : date;
-                    const formattedDate = selectedDate ? selectedDate.toISOString().split("T")[0] : "";
-                    setFormData((prev) => ({
-                      ...prev,
-                      end_date: formattedDate,
-                    }));
-                    setErrors((prev) => ({ ...prev, end_date: "" })); // clear error
+                    if (selectedDate instanceof Date && !isNaN(selectedDate.getTime())) {
+                      // Format in local time (YYYY-MM-DD)
+                      const year = selectedDate.getFullYear();
+                      const month = String(selectedDate.getMonth() + 1).padStart(2, "0");
+                      const day = String(selectedDate.getDate()).padStart(2, "0");
+                      const formattedDate = `${year}-${month}-${day}`;
+
+                      setFormData((prev) => ({
+                        ...prev,
+                        end_date: formattedDate,
+                      }));
+                      setErrors((prev) => ({ ...prev, end_date: "" })); // clear error
+                    }
                   }}
                 />
                 {errors.end_date && (
                   <p className="text-red-500 text-sm">{errors.end_date}</p>
                 )}
               </div>
+
 
             </div>
 
@@ -790,22 +841,24 @@ export default function StudentAddForm() {
 }
 
 // DROPDOWN COMPONENT
+
 type CustomDropdownProps<T extends string> = {
   label?: string;
   options: T[];
   value: T; // controlled selected value
   onSelect?: (value: T) => void;
-  className?: string;  // fixed typo here
+  classsName?: string;
 };
 
 function CustomDropdown<T extends string>({
   label = "Select",
   options = [],
   value,
-  className = "",
+  classsName = "",
   onSelect,
 }: CustomDropdownProps<T>) {
   const [isOpen, setIsOpen] = useState(false);
+  const [selected, setSelected] = useState<T | "">("");
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -818,21 +871,23 @@ function CustomDropdown<T extends string>({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleSelect = (val: T) => {
+  const handleSelect = (value: T) => {
+    setSelected(value);
     setIsOpen(false);
-    onSelect?.(val);
+    onSelect?.(value);
   };
 
   return (
-    <div className={`relative ${className}`} ref={dropdownRef}>
+    <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen((prev) => !prev)}
         className="peer w-full appearance-none rounded-md border border-gray-300 bg-[#F5F5F5] px-4 pr-10 py-2.5 text-left text-gray-700
-          focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:bg-gray-800 dark:text-white dark:border-gray-600"
+        focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:bg-gray-800 dark:text-white dark:border-gray-600"
       >
         {value || label}
       </button>
 
+      {/* Dropdown Icon */}
       <span
         className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 transition-transform duration-200 ${isOpen ? "rotate-180" : ""
           }`}
@@ -840,6 +895,7 @@ function CustomDropdown<T extends string>({
         <FontAwesomeIcon icon={faChevronDown} />
       </span>
 
+      {/* Dropdown List */}
       {isOpen && (
         <ul className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 shadow-lg">
           {options.map((option) => (

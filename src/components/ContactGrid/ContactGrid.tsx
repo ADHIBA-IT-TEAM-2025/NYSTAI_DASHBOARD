@@ -23,7 +23,7 @@ export default function ContactGrid() {
         axios
             .get("https://nystai-backend.onrender.com/get-all-students")
             .then((res) => {
-                setStudents(res.data);
+                 setStudents(res.data.data);
                 setLoading(false);
             })
             .catch((err) => {

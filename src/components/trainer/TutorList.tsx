@@ -1,17 +1,34 @@
-import { Edit, PlusCircleIcon, Trash2 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { Edit, PlusCircleIcon, Trash2, X, ArrowLeft } from "lucide-react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Link } from "react-router-dom";
 import PageMeta from "../common/PageMeta";
 import PageBreadcrumb from "../common/PageBreadCrumb";
 import axios from "axios";
+import { Modal } from "../ui/modal";
+import Label from "../form/Label";
+import Input from "../form/input/InputField";
+import { useDropzone } from "react-dropzone";
+import Upload from "../../icons/Upload icon.png";
+import Uploadafter from "../../icons/OIP.webp";
+import { toast } from "react-hot-toast";
+import DatePicker from "../form/date-picker";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faChevronDown } from "@fortawesome/free-solid-svg-icons";
 
 interface Tutor {
+  tutor_id: number;
   name: string;
   role: string;
   email: string;
   contact: string;
   expertise: string;
   img: string;
+
+  // New fields for editing
+  dob?: string;               // YYYY-MM-DD format
+  gender?: "Male" | "Female" | "Other";
+  experience_years?: string;  // or number
+  joining_date?: string;      // YYYY-MM-DD format
 }
 
 export default function TutorList() {
@@ -59,6 +76,23 @@ export default function TutorList() {
 function ProfileCards() {
   const [team, setTeam] = useState<Tutor[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [selectedTutor, setSelectedTutor] = useState<Tutor | null>(null);
+  const [formData, setFormData] = useState({
+    first_name: "",
+    last_name: "",
+    dob: "",
+    gender: "",
+    email: "",
+    phone: "",
+    expertise: "",
+    experience_years: "",
+    joining_date: "",
+  });
+
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [errors, setErrors] = useState<{ image?: string }>({});
 
   useEffect(() => {
     const fetchTeamData = async () => {
@@ -66,10 +100,10 @@ function ProfileCards() {
         const res = await axios.get(
           "https://nystai-backend.onrender.com/NystaiTutors/getalltutors"
         );
-        console.log("API response:", res.data);
 
         if (Array.isArray(res.data.tutors)) {
           const formattedTutors: Tutor[] = res.data.tutors.map((t: any) => ({
+            tutor_id: t.tutor_id,
             name: `${t.first_name} ${t.last_name}`,
             role: t.expertise ?? "",
             email: t.email ?? "",
@@ -81,6 +115,7 @@ function ProfileCards() {
         } else if (res.data.tutor) {
           setTeam([
             {
+              tutor_id: res.data.tutor.tutor_id,
               name: `${res.data.tutor.first_name} ${res.data.tutor.last_name}`,
               role: res.data.tutor.expertise ?? "",
               email: res.data.tutor.email ?? "",
@@ -100,77 +135,160 @@ function ProfileCards() {
     fetchTeamData();
   }, []);
 
-  if (loading) {
-    return <p>Loading...</p>;
-  }
+  const openEditModal = (tutor: Tutor) => {
+    setSelectedTutor(tutor);
+
+    const [first_name, ...last_nameParts] = tutor.name.split(" ");
+    const last_name = last_nameParts.join(" ");
+
+    setFormData({
+      first_name: first_name || "",
+      last_name: last_name || "",
+      dob: tutor.dob || "",
+      gender: tutor.gender || "",
+      email: tutor.email || "",
+      phone: tutor.contact || "",
+      expertise: tutor.expertise || "",
+      experience_years: tutor.experience_years || "",
+      joining_date: tutor.joining_date || "",
+    });
+
+    setSelectedFile(null);
+    setIsEditOpen(true);
+  };
+
+
+
+  const openDeleteModal = (tutor: Tutor) => {
+    setSelectedTutor(tutor);
+    setIsDeleteOpen(true);
+  };
+
+  const handleDeleteTutor = async () => {
+    if (!selectedTutor) return;
+    try {
+      const res = await axios.delete(
+        `https://nystai-backend.onrender.com/NystaiTutors/deletetutor/${selectedTutor.tutor_id}`
+      );
+      toast.success(res.data.message || "Tutor deleted successfully");
+      setTeam(prev => prev.filter(t => t.tutor_id !== selectedTutor.tutor_id));
+      setIsDeleteOpen(false);
+      setSelectedTutor(null);
+    } catch (error: any) {
+      console.error(error);
+      toast.error(error?.response?.data?.message || "Failed to delete tutor");
+    }
+  };
+
+  const handleUpdateTutor = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedTutor) return;
+
+    try {
+      const payload = {
+        first_name: formData.first_name,
+        last_name: formData.last_name,
+        dob: formData.dob,
+        gender: formData.gender,
+        email: formData.email,
+        phone: formData.phone,
+        expertise: formData.expertise,
+        experience_years: formData.experience_years,
+        joining_date: formData.joining_date,
+      };
+
+      let res;
+      if (selectedFile) {
+        const formDataToSend = new FormData();
+        Object.entries(payload).forEach(([key, value]) => formDataToSend.append(key, value));
+        formDataToSend.append("tutor_image", selectedFile);
+
+        res = await axios.put(
+          `https://nystai-backend.onrender.com/NystaiTutors/updatetutor/${selectedTutor.tutor_id}`,
+          formDataToSend,
+          { headers: { "Content-Type": "multipart/form-data" } }
+        );
+      } else {
+        res = await axios.put(
+          `https://nystai-backend.onrender.com/NystaiTutors/updatetutor/${selectedTutor.tutor_id}`,
+          payload,
+          { headers: { "Content-Type": "application/json" } }
+        );
+      }
+
+      toast.success(res.data.message || "Tutor updated successfully");
+
+      setTeam(prev =>
+        prev.map(t =>
+          t.tutor_id === selectedTutor.tutor_id
+            ? {
+              ...t,
+              first_name: payload.first_name,
+              last_name: payload.last_name,
+              email: payload.email,
+              phone: payload.phone,
+              expertise: payload.expertise,
+              experience_years: payload.experience_years,
+              dob: payload.dob,
+              gender: payload.gender,
+              joining_date: payload.joining_date,
+              img: selectedFile ? URL.createObjectURL(selectedFile) : t.img,
+            }
+            : t
+        )
+      );
+
+      setIsEditOpen(false);
+      setSelectedTutor(null);
+      setSelectedFile(null);
+    } catch (error: any) {
+      console.error("Update Error:", error);
+      toast.error(error?.response?.data?.message || "Failed to update tutor");
+    }
+  };
+
+  if (loading) return <p>Loading...</p>;
 
   return (
     <>
       {team.map((person, i) => (
-        <div
-          key={i}
-          className="relative w-62 h-72 group overflow-hidden rounded-lg shadow-lg bg-white border border-gray-300"
-        >
-          {/* Info behind image */}
+        <div key={i} className="relative w-72 h-72 group overflow-hidden rounded-lg shadow-lg bg-white border border-gray-300">
+          {/* Card Info */}
           <div className="absolute top-25 left-0 w-full p-4 bg-white text-black opacity-0 group-hover:opacity-100 transition-opacity duration-500 z-0">
             <div className="flex mb-3">
-              <span className="w-30 font-medium text-gray-500 dark:text-gray-400">
-                Contact
-              </span>
-              <span className="w-10 font-medium text-gray-500 dark:text-gray-400">
-                :
-              </span>
-              <span className="w-80 break-words whitespace-normal text-gray-800 dark:text-white/90">
-                {person.contact}
-              </span>
+              <span className="flex-[0_0_20%] font-medium text-gray-500 dark:text-gray-400">Coaching</span>
+              <span className="flex-[0_0_10%] font-medium text-gray-500 dark:text-gray-400 text-center">:</span>
+              <span className="flex-[0_0_70%] break-words whitespace-normal text-gray-800 dark:text-white/90">{person.expertise}</span>
             </div>
             <div className="flex mb-3">
-              <span className="w-30 font-medium text-gray-500 dark:text-gray-400">
-                Mail Id
-              </span>
-              <span className="w-10 font-medium text-gray-500 dark:text-gray-400">
-                :
-              </span>
-              <span className="w-80 break-words whitespace-normal text-gray-800 dark:text-white/90">
-                {person.email}
-              </span>
+              <span className="flex-[0_0_20%] font-medium text-gray-500 dark:text-gray-400">Contact</span>
+              <span className="flex-[0_0_10%] font-medium text-gray-500 dark:text-gray-400 text-center">:</span>
+              <span className="flex-[0_0_70%] break-words whitespace-normal text-gray-800 dark:text-white/90">{person.contact}</span>
             </div>
             <div className="flex mb-3">
-              <span className="w-30 font-medium text-gray-500 dark:text-gray-400">
-                Expertise Course
-              </span>
-              <span className="w-10 font-medium text-gray-500 dark:text-gray-400">
-                :
-              </span>
-              <span className="w-80 break-words whitespace-normal text-gray-800 dark:text-white/90">
-                {person.expertise}
-              </span>
+              <span className="flex-[0_0_20%] font-medium text-gray-500 dark:text-gray-400">Mail Id</span>
+              <span className="flex-[0_0_10%] font-medium text-gray-500 dark:text-gray-400 text-center">:</span>
+              <span className="flex-[0_0_70%] break-words whitespace-normal text-gray-800 dark:text-white/90">{person.email}</span>
             </div>
           </div>
 
           {/* Image */}
           <div className="absolute top-0 left-0 w-full h-full z-10 transform transition-transform duration-500 ease-in-out group-hover:-translate-y-50">
-            <img
-              src={person.img}
-              alt={person.name}
-              className="w-62 h-72 object-cover"
-            />
+            <img src={person.img} alt={person.name} className="w-72 h-72 object-cover" />
           </div>
 
-          {/* Top Right Icons + Username */}
-          <div className="absolute m-3 top-2 z-20 flex justify-between items-center w-[260px] gap-2">
+          {/* Icons */}
+          <div className="absolute top-2 left-1/2 transform -translate-x-1/2 z-20 flex justify-between items-center w-[260px] gap-2">
             <div className="max-w-[160px] text-left opacity-0 group-hover:opacity-100 transition-opacity duration-500">
               <h2 className="text-lg font-medium text-white">{person.name}</h2>
-              <p className="text-sm text-white leading-relaxed line-clamp-3">
-                {person.role}
-              </p>
+              <p className="text-sm text-white leading-relaxed line-clamp-3">{person.role}</p>
             </div>
             <div className="flex gap-2">
-              <button className="bg-transparent p-1 rounded-full hover:bg-white hover:bg-opacity-20 transition">
-                <Edit className="text-white" size={14} />
+              <button className="bg-transparent p-1 rounded-full hover:bg-white hover:bg-opacity-20 transition" onClick={() => openEditModal(person)}>
+                <Edit className="text-white" size={18} />
               </button>
-              <button className="bg-transparent p-1 rounded-full hover:bg-white hover:bg-opacity-20 transition">
-                <Trash2 className="text-white" size={14} />
+              <button className="bg-transparent p-1 rounded-full hover:bg-white hover:bg-opacity-20 transition" onClick={() => openDeleteModal(person)}>
+                <Trash2 className="text-white" size={18} />
               </button>
             </div>
           </div>
@@ -179,13 +297,313 @@ function ProfileCards() {
           <div className="absolute bottom-0 left-0 w-full p-4 flex justify-center text-center transition-opacity duration-500 z-20 opacity-100 group-hover:opacity-0">
             <h2 className="text-xl font-medium text-white leading-6 tracking-wide">
               {person.name} <br />
-              <span className="text-gray-300 text-sm font-light tracking-wider">
-                {person.role}
-              </span>
+              <span className="text-gray-300 text-sm font-light tracking-wider">{person.role}</span>
             </h2>
           </div>
         </div>
       ))}
+
+      {isEditOpen && selectedTutor && (
+        <Modal isOpen={isEditOpen} onClose={() => setIsEditOpen(false)} className="max-w-[900px] m-4">
+          <div className="w-full max-w-[900px] overflow-y-auto rounded-3xl bg-white p-4 dark:bg-gray-900 lg:p-11">
+            <h4 className="mb-4 text-2xl font-semibold text-gray-800 dark:text-white/90 text-center">
+              Edit Tutor
+            </h4>
+
+            <form className="flex flex-col mt-5" onSubmit={handleUpdateTutor}>
+
+              {/* First Row */}
+              <div className="grid grid-cols-1 gap-6 xl:grid-cols-4">
+                <div>
+                  <Label>First Name</Label>
+                  <Input
+                    type="text"
+                    value={formData.first_name}
+                    onChange={(e) =>
+                      setFormData(prev => ({ ...prev, first_name: e.target.value.replace(/[^A-Za-z]/g, "") }))
+                    }
+                  />
+                </div>
+
+                <div>
+                  <Label>Last Name</Label>
+                  <Input
+                    type="text"
+                    value={formData.last_name}
+                    onChange={(e) =>
+                      setFormData(prev => ({ ...prev, last_name: e.target.value.replace(/[^A-Za-z]/g, "") }))
+                    }
+                  />
+                </div>
+
+                <div>
+                  <Label>Date of Birth</Label>
+                  <DatePicker
+                    maxDate={new Date(new Date().setFullYear(new Date().getFullYear() - 21))}
+                    value={formData.dob ? new Date(formData.dob) : undefined}
+                    onChange={(date) => {
+                      const selectedDate = Array.isArray(date) ? date[0] : date;
+                      setFormData(prev => ({ ...prev, dob: selectedDate ? formatDateToLocalISO(selectedDate) : "" }));
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <Label>Gender</Label>
+                  <CustomDropdown
+                    options={["Male", "Female", "Other"]}
+                    value={formData.gender}
+                    onSelect={(value) => setFormData(prev => ({ ...prev, gender: value }))}
+                  />
+                </div>
+              </div>
+
+              {/* Second Row */}
+              <div className="grid grid-cols-1 gap-6 xl:grid-cols-4 mt-5">
+                <div>
+                  <Label>Mail ID</Label>
+                  <Input
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                  />
+                </div>
+
+                <div>
+                  <Label>Phone Number</Label>
+                  <Input
+                    type="tel"
+                    value={formData.phone}
+                    onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
+                  />
+                </div>
+
+                <div>
+                  <Label>Joining Date</Label>
+                  <div>
+                    <DatePicker
+                      id="join-date"
+                      placeholder="Select a date"
+                      minDate={new Date()} // Prevent selecting past dates
+                      value={
+                        formData.joining_date && !isNaN(Date.parse(formData.joining_date))
+                          ? new Date(formData.joining_date)
+                          : undefined
+                      }
+                      onChange={(date) => {
+                        const selectedDate = Array.isArray(date) ? date[0] : date;
+
+                        if (selectedDate) {
+                          // Format date to YYYY-MM-DD
+                          const year = selectedDate.getFullYear();
+                          const month = String(selectedDate.getMonth() + 1).padStart(2, "0");
+                          const day = String(selectedDate.getDate()).padStart(2, "0");
+
+                          setFormData((prev) => ({
+                            ...prev,
+                            joining_date: `${year}-${month}-${day}`,
+                          }));
+                        } else {
+                          setFormData((prev) => ({
+                            ...prev,
+                            joining_date: "",
+                          }));
+                        }
+                      }}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <Label>Years of Experience</Label>
+                  <Input
+                    type="text"
+                    value={formData.experience_years}
+                    onChange={(e) => setFormData(prev => ({ ...prev, experience_years: e.target.value }))}
+                  />
+                </div>
+              </div>
+
+              {/* Third Row */}
+              <div className="grid grid-cols-1 gap-6 xl:grid-cols-2 mt-5 mb-5">
+
+                <div>
+                  <Label>Expertise / Courses</Label>
+                  <CustomDropdown
+                    options={["CCTV", "Home Automation", "Networking", "Other"]}
+                    value={formData.expertise}
+                    onSelect={(value) => setFormData(prev => ({ ...prev, expertise: value }))}
+                  />
+                </div>
+
+              </div>
+              <div>
+                <Label>Upload Profile Photo</Label>
+                <FileUploadBox
+                  selectedFile={selectedFile}
+                  setSelectedFile={setSelectedFile}
+                  previewImage={selectedTutor.img}
+                />
+              </div>
+
+
+              {/* Buttons */}
+              <div className="flex items-center gap-3 px-2 mt-6 lg:justify-center">
+                <button
+                  type="button"
+                  className="px-4 py-2 rounded-2xl border border-[#F8C723] text-gray-800"
+                  onClick={() => setIsEditOpen(false)}
+                >
+                  <ArrowLeft className="size-5 text-[#F8C723]" />
+                </button>
+                <button
+                  type="submit"
+                  className="flex items-center gap-2 rounded-2xl border border-gray-300 bg-[#F8C723] px-10 py-2 text-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 hover:text-gray-800"
+                >
+                  Update Tutor
+                </button>
+              </div>
+            </form>
+          </div>
+        </Modal>
+      )}
+
+      {isDeleteOpen && selectedTutor && (
+        <Modal isOpen={isDeleteOpen} onClose={() => setIsDeleteOpen(false)} className="max-w-md m-4">
+          <div className="p-6 rounded-3xl bg-white dark:bg-gray-900">
+            <h4 className="text-xl font-semibold text-gray-800 dark:text-white/90 mb-8">Confirm Tutor Deletion</h4>
+            <div className="flex justify-center gap-4">
+              <button className="flex items-center gap-2 rounded-2xl border border-gray-300 bg-[#F8C723] px-10 py-2 text-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 hover:text-gray-800" onClick={handleDeleteTutor}>
+                Yes, Delete Tutor
+              </button>
+              <button className="px-4 py-2 rounded-2xl border border-[#F8C723] text-gray-800" onClick={() => setIsDeleteOpen(false)}>
+                <X size={18} className="text-[#F8C723]" />
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
     </>
+  );
+}
+
+function FileUploadBox({
+  selectedFile,
+  setSelectedFile,
+  previewImage,
+}: {
+  selectedFile: File | null;
+  setSelectedFile: React.Dispatch<React.SetStateAction<File | null>>;
+  previewImage?: string | null;
+}) {
+  const onDrop = useCallback(
+    (acceptedFiles: File[]) => {
+      if (acceptedFiles.length > 0) setSelectedFile(acceptedFiles[0]);
+    },
+    [setSelectedFile]
+  );
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    multiple: false,
+  });
+
+  const handleDelete = () => setSelectedFile(null);
+
+  const displayImage = selectedFile
+    ? URL.createObjectURL(selectedFile)
+    : previewImage;
+
+  return displayImage ? (
+    <div className="bg-white flex justify-between items-center px-4 py-3 rounded-xl shadow border h-[200px]">
+      <div className="flex items-center gap-4">
+        <img src={displayImage} alt="Preview" className="h-12 w-12 object-contain" />
+        <div>
+          <p className="text-sm font-medium">{selectedFile?.name || "Current Image"}</p>
+          {selectedFile && <p className="text-xs text-gray-500">{(selectedFile.size / (1024 * 1024)).toFixed(1)} MB</p>}
+        </div>
+      </div>
+      <button onClick={handleDelete} className="text-gray-500 hover:text-red-500">
+        <Trash2 size={18} />
+      </button>
+    </div>
+  ) : (
+    <div {...getRootProps()} className={`transition border border-gray-300 border-dashed cursor-pointer rounded-xl h-[200px] p-7 lg:p-10 ${isDragActive ? "bg-gray-100" : "bg-gray-50"}`}>
+      <input {...getInputProps()} />
+      <div className="flex flex-col justify-center items-center text-center h-full gap-2">
+        <img src={Upload || "https://via.placeholder.com/50"} alt="Upload Icon" className="h-12 w-12 object-contain" />
+        <p className="text-sm">
+          {isDragActive ? "Drop Files or" : "Drag & Drop Files or"}{" "}
+          <span className="font-medium underline text-brand-500">Browse File</span>
+        </p>
+        <span className="text-sm text-gray-700">Supported: JPEG, PNG, GIF, PDF, MP4, etc.</span>
+      </div>
+    </div>
+  );
+}
+
+// DROPDOWN COMPONENT
+type CustomDropdownProps<T extends string> = {
+  label?: string;
+  options: T[];
+  value: T;
+  onSelect?: (value: T) => void;
+};
+
+function CustomDropdown<T extends string>({
+  label = "Pick an option",
+  options = [],
+  value,
+  onSelect,
+}: CustomDropdownProps<T>) {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleSelect = (value: T) => {
+    setIsOpen(false);
+    onSelect?.(value);
+  };
+
+  return (
+    <div className="relative" ref={dropdownRef}>
+      <button
+        onClick={() => setIsOpen((prev) => !prev)}
+        className="peer w-full appearance-none rounded-md border border-gray-300 bg-[#F5F5F5] px-4 pr-10 py-2.5 text-left text-gray-400
+        focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:bg-gray-800 dark:text-white dark:border-gray-600"
+      >
+        {value || label}
+      </button>
+
+      <span
+        className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 transition-transform duration-200 ${isOpen ? "rotate-180" : ""
+          }`}
+      >
+        <FontAwesomeIcon icon={faChevronDown} />
+      </span>
+
+      {isOpen && (
+        <ul className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 shadow-lg">
+          {options.map((option) => (
+            <li
+              key={option}
+              onClick={() => handleSelect(option)}
+              className="cursor-pointer px-4 py-2 text-sm text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
+            >
+              {option}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   );
 }

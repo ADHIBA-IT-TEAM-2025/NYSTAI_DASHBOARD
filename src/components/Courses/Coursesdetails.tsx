@@ -14,10 +14,11 @@ import Uploadafter from "../../icons/Upload icon.png";
 // ✅ Interface for course data from API
 interface Course {
     course_name: string;
-    course_duration: number;
+    course_duration: string; // string instead of number
     card_overview: string;
     image_url?: string;
 }
+
 
 // ✅ Interface for edit form validation errors
 interface EditErrors {
@@ -55,8 +56,13 @@ export default function CourseDetail() {
                 if (!res.ok) {
                     throw new Error("Failed to fetch course");
                 }
-                const data: Course = await res.json();
-                setCourse(data);
+                const result = await res.json();
+                if (result.success && result.data.length > 0) {
+                    setCourse(result.data[0]); // ✅ pick the first course
+                } else {
+                    setCourse(null);
+                    toast.error("Course not found");
+                }
             } catch (error) {
                 console.error("Failed to fetch course detail:", error);
                 toast.error("Failed to fetch course details");
@@ -67,6 +73,7 @@ export default function CourseDetail() {
 
         if (id) fetchCourseDetail();
     }, [id]);
+
 
     useEffect(() => {
         if (course) {
