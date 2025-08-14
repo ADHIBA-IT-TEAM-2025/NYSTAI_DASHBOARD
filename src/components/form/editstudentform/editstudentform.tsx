@@ -11,7 +11,6 @@ import { useParams } from "react-router-dom";
 import axios from "axios";
 import toast from 'react-hot-toast';
 
-
 type StudentFormData = {
   name: string;
   last_name: string;
@@ -49,9 +48,7 @@ type StudentFormData = {
   passport_photo?: File | null;
 };
 
-
 export default function StudentEditForm() {
-
   const [formData, setFormData] = useState<StudentFormData>({
     name: "",
     last_name: "",
@@ -76,7 +73,6 @@ export default function StudentEditForm() {
     course_enrolled: "",
     batch: "",
     tutor: "",
-    // certificate_status: "",
     pan_card_url: "",
     aadhar_card_url: "",
     sslc_marksheet_url: "",
@@ -136,19 +132,16 @@ export default function StudentEditForm() {
   const handleSubmit = async () => {
     try {
       const payload = new FormData();
-
-      // Append text fields
       Object.entries(formData).forEach(([key, value]) => {
         if (
           value !== undefined &&
           value !== null &&
-          typeof value !== "object" // avoid appending [object Object]
+          typeof value !== "object"
         ) {
           payload.append(key, value as string);
         }
       });
 
-      // Append files with exact field names
       if (formData.pan_card instanceof File)
         payload.append("pan_card", formData.pan_card);
       if (formData.aadhar_card instanceof File)
@@ -175,7 +168,6 @@ export default function StudentEditForm() {
       <div className="p-4 border-t border-gray-100 dark:border-gray-800 sm:p-6" >
         <div className="space-y-6" >
 
-          {/* Heading design */}
           <h2
             className="text-xl font-semibold text-gray-800 dark:text-white/90"
             x-text="pageName"
@@ -187,7 +179,6 @@ export default function StudentEditForm() {
             Personal Details
           </h3>
 
-          {/* input form  */}
           <div className="grid grid-cols-1 gap-6 xl:grid-cols-4">
             <div className="space-y-6">
               <div>
@@ -409,7 +400,6 @@ export default function StudentEditForm() {
             </div>
           </div>
 
-          {/* Heading design */}
           <h3 className="text-l font-semibold text-[#202224] dark:text-white/90 py-4">
             Academic & Course Details
           </h3>
@@ -557,28 +547,10 @@ export default function StudentEditForm() {
               </div>
             </div>
           </div>
-
-          {/* <div className="grid grid-cols-1 gap-6 xl:grid-cols-4">
-            <div className="space-y-6">
-              <div>
-                <Label>Certificate Status</Label>
-                <div className="relative">
-                  <CustomDropdown
-                    options={["completed", "pending"]}
-                    selected={formData.certificate_status as "completed" | "pending"}
-                    onSelect={(value) => setFormData({ ...formData, certificate_status: value })}
-                  />
-                </div>
-              </div>
-            </div>
-          </div> */}
-
-          {/* Heading design */}
           <h3 className="text-l font-semibold text-[#202224] dark:text-white/90 py-4">
             Upload Documents
           </h3>
 
-          {/* UPLOAD IMAGE  */}
           <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
             <div className="space-y-6">
               <Label>Pan Card</Label>
@@ -621,7 +593,6 @@ export default function StudentEditForm() {
             </div>
           </div>
 
-          {/* BTN  */}
           <div className="grid xl:grid-cols-2 gap-6">
             <div className="col-span-full flex justify-center">
               <button
@@ -637,8 +608,6 @@ export default function StudentEditForm() {
     </div>
   );
 }
-
-// DROPDOWN COMPONENT 
 
 type CustomDropdownProps<T extends string> = {
   label?: string;

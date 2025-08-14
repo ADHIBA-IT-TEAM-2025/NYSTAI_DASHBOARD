@@ -52,21 +52,23 @@ export default function StudentAddForm() {
   const handleSubmit = async () => {
     const data = new FormData();
 
+    // Validate first
     const isValid = validateForm();
     if (!isValid) {
       toast.error("Please correct the errors");
       return;
     }
 
-    // Append text fields
-for (const key in formData) {
-  const value = formData[key as keyof typeof formData];
-  if (value !== undefined && value !== null && value !== "") {
-    data.append(key, value as string | Blob);
-  }
-}
+    // Append normal text fields from formData
+    for (const key in formData) {
+      const value = formData[key as keyof typeof formData];
+      if (value !== undefined && value !== null && value !== "") {
+        // Convert non-file values to string
+        data.append(key, value instanceof File ? value : String(value));
+      }
+    }
 
-
+    // Check required document uploads
     if (
       !documents.passport_photo ||
       !documents.pan_card ||
@@ -77,51 +79,52 @@ for (const key in formData) {
       return;
     }
 
+    // Append document files
     data.append("passport_photo", documents.passport_photo);
     data.append("pan_card", documents.pan_card);
     data.append("aadhar_card", documents.aadhar_card);
     data.append("sslc_marksheet", documents.sslc_marksheet);
 
+    // Debug: Log exactly what is being sent
+    for (let [key, value] of data.entries()) {
+      console.log(key, value);
+    }
+
     try {
-      const response = await fetch("https://nystai-backend.onrender.com/insert-student", {
-        method: "POST",
-        body: data,
-      });
+      const response = await fetch(
+        "https://nystai-backend.onrender.com/insert-student",
+        {
+          method: "POST",
+          body: data,
+        }
+      );
 
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.error || "Upload failed");
+        if (result.errors && Array.isArray(result.errors)) {
+          const fieldErrors: { [key: string]: string } = {};
+          result.errors.forEach((error: { param: string; msg: string }) => {
+            fieldErrors[error.param] = error.msg;
+          });
+          setErrors(fieldErrors);
+          toast.error("Please fix the highlighted errors");
+        } else {
+          throw new Error(result.error || "Upload failed");
+        }
+        return;
       }
-
-
-      // ONLY set the array, not the whole response object
-      setFormData(result.data);
-
 
       toast.success("Student inserted! ID: " + result.student_id);
     } catch (err: any) {
-      if (err.response && err.response.status === 422) {
-        const backendErrors = err.response.data.errors;
-        const fieldErrors: { [key: string]: string } = {};
-
-        backendErrors.forEach((error: { param: string; msg: string }) => {
-          fieldErrors[error.param] = error.msg;
-        });
-
-        setErrors(fieldErrors); // Update state with field-specific errors
-        toast.error("Please fix the highlighted errors");
-      } else {
-        toast.error("Error uploading student");
-      }
+      console.error("Upload error:", err);
+      toast.error("Error uploading student");
     }
-for (let [key, value] of data.entries()) {
-  console.log(key, value);
-}
 
-
+    // Remove any reference to `req` here — frontend cannot access it
 
   };
+
 
 
   const [errors, setErrors] = useState<{ [key: string]: string }>({});

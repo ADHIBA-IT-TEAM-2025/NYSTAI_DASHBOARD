@@ -18,17 +18,22 @@ import { faChevronDown } from "@fortawesome/free-solid-svg-icons";
 interface Tutor {
   tutor_id: number;
   name: string;
-  role: string;
+  dob: string;
+  gender: string;
   email: string;
   contact: string;
   expertise: string;
-  img: string;
+  experience_years: string;
+  joining_date: string;
+  img?: string;
+}
 
-  // New fields for editing
-  dob?: string;               // YYYY-MM-DD format
-  gender?: "Male" | "Female" | "Other";
-  experience_years?: string;  // or number
-  joining_date?: string;      // YYYY-MM-DD format
+interface EditTutorModalProps {
+  isEditOpen: boolean;
+  setIsEditOpen: (val: boolean) => void;
+  selectedTutor: Tutor | null;
+  setSelectedTutor: (tutor: Tutor | null) => void;
+  setTeam: React.Dispatch<React.SetStateAction<Tutor[]>>;
 }
 
 export default function TutorList() {
@@ -90,8 +95,9 @@ function ProfileCards() {
     experience_years: "",
     joining_date: "",
   });
-
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isImageRemoved, setIsImageRemoved] = useState(false);
+
   const [errors, setErrors] = useState<{ image?: string }>({});
 
   useEffect(() => {
@@ -104,12 +110,18 @@ function ProfileCards() {
         if (Array.isArray(res.data.tutors)) {
           const formattedTutors: Tutor[] = res.data.tutors.map((t: any) => ({
             tutor_id: t.tutor_id,
-            name: `${t.first_name} ${t.last_name}`,
+            first_name: t.first_name ?? "",
+            last_name: t.last_name ?? "",
+            name: `${t.first_name ?? ""} ${t.last_name ?? ""}`,
             role: t.expertise ?? "",
             email: t.email ?? "",
             contact: t.phone ?? "",
             expertise: t.expertise ?? "",
             img: t.tutor_image ?? "",
+            dob: t.dob ?? "",
+            gender: t.gender ?? "",
+            joining_date: t.joining_date ?? "",
+            experience_years: t.experience_years ?? ""
           }));
           setTeam(formattedTutors);
         } else if (res.data.tutor) {
@@ -135,30 +147,6 @@ function ProfileCards() {
     fetchTeamData();
   }, []);
 
-  const openEditModal = (tutor: Tutor) => {
-    setSelectedTutor(tutor);
-
-    const [first_name, ...last_nameParts] = tutor.name.split(" ");
-    const last_name = last_nameParts.join(" ");
-
-    setFormData({
-      first_name: first_name || "",
-      last_name: last_name || "",
-      dob: tutor.dob || "",
-      gender: tutor.gender || "",
-      email: tutor.email || "",
-      phone: tutor.contact || "",
-      expertise: tutor.expertise || "",
-      experience_years: tutor.experience_years || "",
-      joining_date: tutor.joining_date || "",
-    });
-
-    setSelectedFile(null);
-    setIsEditOpen(true);
-  };
-
-
-
   const openDeleteModal = (tutor: Tutor) => {
     setSelectedTutor(tutor);
     setIsDeleteOpen(true);
@@ -180,41 +168,56 @@ function ProfileCards() {
     }
   };
 
+  const openEditModal = (tutor: Tutor) => {
+    setSelectedTutor(tutor);
+
+    setFormData({
+      first_name: tutor.first_name || "",
+      last_name: tutor.last_name || "",
+      dob: tutor.dob || "",
+      gender: tutor.gender || "",
+      email: tutor.email || "",
+      phone: tutor.contact || "",
+      expertise: tutor.expertise || "",
+      experience_years: tutor.experience_years || "",
+      joining_date: tutor.joining_date || "",
+    });
+
+    setSelectedFile(null);
+    setIsEditOpen(true);
+  };
+
   const handleUpdateTutor = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedTutor) return;
 
+    const updateUrl = `https://nystai-backend.onrender.com/NystaiTutors/updatetutor/${selectedTutor.tutor_id}`;
+
     try {
-      const payload = {
-        first_name: formData.first_name,
-        last_name: formData.last_name,
-        dob: formData.dob,
-        gender: formData.gender,
-        email: formData.email,
-        phone: formData.phone,
-        expertise: formData.expertise,
-        experience_years: formData.experience_years,
-        joining_date: formData.joining_date,
-      };
+      const formDataToSend = new FormData();
+      formDataToSend.append("first_name", formData.first_name || "");
+      formDataToSend.append("last_name", formData.last_name || "");
+      formDataToSend.append("dob", formData.dob ? String(formData.dob) : "");
+      formDataToSend.append("gender", formData.gender || "");
+      formDataToSend.append("email", formData.email || "");
+      formDataToSend.append("phone", formData.phone || ""); // match backend key
+      formDataToSend.append("expertise", formData.expertise || "");
+      formDataToSend.append("experience_years", formData.experience_years ? String(formData.experience_years) : "0");
+      formDataToSend.append("joining_date", formData.joining_date ? String(formData.joining_date) : "");
 
-      let res;
       if (selectedFile) {
-        const formDataToSend = new FormData();
-        Object.entries(payload).forEach(([key, value]) => formDataToSend.append(key, value));
         formDataToSend.append("tutor_image", selectedFile);
-
-        res = await axios.put(
-          `https://nystai-backend.onrender.com/NystaiTutors/updatetutor/${selectedTutor.tutor_id}`,
-          formDataToSend,
-          { headers: { "Content-Type": "multipart/form-data" } }
-        );
-      } else {
-        res = await axios.put(
-          `https://nystai-backend.onrender.com/NystaiTutors/updatetutor/${selectedTutor.tutor_id}`,
-          payload,
-          { headers: { "Content-Type": "application/json" } }
-        );
+      } else if (isImageRemoved) {
+        formDataToSend.append("remove_image", "true");
+        formDataToSend.append("tutor_image", "");
       }
+
+      // Debug
+      for (let [key, value] of formDataToSend.entries()) {
+        console.log(`${key}:`, value);
+      }
+
+      const res = await axios.patch(updateUrl, formDataToSend);
 
       toast.success(res.data.message || "Tutor updated successfully");
 
@@ -223,16 +226,12 @@ function ProfileCards() {
           t.tutor_id === selectedTutor.tutor_id
             ? {
               ...t,
-              first_name: payload.first_name,
-              last_name: payload.last_name,
-              email: payload.email,
-              phone: payload.phone,
-              expertise: payload.expertise,
-              experience_years: payload.experience_years,
-              dob: payload.dob,
-              gender: payload.gender,
-              joining_date: payload.joining_date,
-              img: selectedFile ? URL.createObjectURL(selectedFile) : t.img,
+              ...formData,
+              img: selectedFile
+                ? URL.createObjectURL(selectedFile)
+                : isImageRemoved
+                  ? ""
+                  : t.img,
             }
             : t
         )
@@ -241,8 +240,10 @@ function ProfileCards() {
       setIsEditOpen(false);
       setSelectedTutor(null);
       setSelectedFile(null);
+      setIsImageRemoved(false);
     } catch (error: any) {
-      console.error("Update Error:", error);
+      console.error("Update Tutor Error:", error);
+      console.error("Error Response:", error?.response?.data);
       toast.error(error?.response?.data?.message || "Failed to update tutor");
     }
   };
@@ -311,8 +312,6 @@ function ProfileCards() {
             </h4>
 
             <form className="flex flex-col mt-5" onSubmit={handleUpdateTutor}>
-
-              {/* First Row */}
               <div className="grid grid-cols-1 gap-6 xl:grid-cols-4">
                 <div>
                   <Label>First Name</Label>
@@ -339,11 +338,33 @@ function ProfileCards() {
                 <div>
                   <Label>Date of Birth</Label>
                   <DatePicker
+                    id="dob"
+                    placeholder="Select a date"
                     maxDate={new Date(new Date().setFullYear(new Date().getFullYear() - 21))}
-                    value={formData.dob ? new Date(formData.dob) : undefined}
+                    value={
+                      formData.dob && !isNaN(Date.parse(formData.dob))
+                        ? new Date(formData.dob)
+                        : undefined
+                    }
                     onChange={(date) => {
                       const selectedDate = Array.isArray(date) ? date[0] : date;
-                      setFormData(prev => ({ ...prev, dob: selectedDate ? formatDateToLocalISO(selectedDate) : "" }));
+
+                      if (selectedDate) {
+                        // Format date to YYYY-MM-DD
+                        const year = selectedDate.getFullYear();
+                        const month = String(selectedDate.getMonth() + 1).padStart(2, "0");
+                        const day = String(selectedDate.getDate()).padStart(2, "0");
+
+                        setFormData((prev) => ({
+                          ...prev,
+                          dob: `${year}-${month}-${day}`,
+                        }));
+                      } else {
+                        setFormData((prev) => ({
+                          ...prev,
+                          dob: "",
+                        }));
+                      }
                     }}
                   />
                 </div>
@@ -358,7 +379,6 @@ function ProfileCards() {
                 </div>
               </div>
 
-              {/* Second Row */}
               <div className="grid grid-cols-1 gap-6 xl:grid-cols-4 mt-5">
                 <div>
                   <Label>Mail ID</Label>
@@ -384,7 +404,8 @@ function ProfileCards() {
                     <DatePicker
                       id="join-date"
                       placeholder="Select a date"
-                      minDate={new Date()} // Prevent selecting past dates
+                      minDate={undefined} // or just remove this prop
+
                       value={
                         formData.joining_date && !isNaN(Date.parse(formData.joining_date))
                           ? new Date(formData.joining_date)
@@ -424,7 +445,6 @@ function ProfileCards() {
                 </div>
               </div>
 
-              {/* Third Row */}
               <div className="grid grid-cols-1 gap-6 xl:grid-cols-2 mt-5 mb-5">
 
                 <div>
@@ -437,17 +457,18 @@ function ProfileCards() {
                 </div>
 
               </div>
+
               <div>
                 <Label>Upload Profile Photo</Label>
                 <FileUploadBox
                   selectedFile={selectedFile}
                   setSelectedFile={setSelectedFile}
                   previewImage={selectedTutor.img}
+                  isImageRemoved={isImageRemoved}
+                  setIsImageRemoved={setIsImageRemoved}
                 />
               </div>
 
-
-              {/* Buttons */}
               <div className="flex items-center gap-3 px-2 mt-6 lg:justify-center">
                 <button
                   type="button"
@@ -491,16 +512,23 @@ function FileUploadBox({
   selectedFile,
   setSelectedFile,
   previewImage,
+  isImageRemoved,
+  setIsImageRemoved,
 }: {
   selectedFile: File | null;
   setSelectedFile: React.Dispatch<React.SetStateAction<File | null>>;
   previewImage?: string | null;
+  isImageRemoved: boolean;
+  setIsImageRemoved: React.Dispatch<React.SetStateAction<boolean>>;
 }) {
   const onDrop = useCallback(
     (acceptedFiles: File[]) => {
-      if (acceptedFiles.length > 0) setSelectedFile(acceptedFiles[0]);
+      if (acceptedFiles.length > 0) {
+        setSelectedFile(acceptedFiles[0]);
+        setIsImageRemoved(false);
+      }
     },
-    [setSelectedFile]
+    [setSelectedFile, setIsImageRemoved]
   );
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -508,11 +536,13 @@ function FileUploadBox({
     multiple: false,
   });
 
-  const handleDelete = () => setSelectedFile(null);
+  const handleDelete = () => {
+    setSelectedFile(null);
+    setIsImageRemoved(true);
+  };
 
-  const displayImage = selectedFile
-    ? URL.createObjectURL(selectedFile)
-    : previewImage;
+  const displayImage =
+    !isImageRemoved && (selectedFile ? URL.createObjectURL(selectedFile) : previewImage);
 
   return displayImage ? (
     <div className="bg-white flex justify-between items-center px-4 py-3 rounded-xl shadow border h-[200px]">
@@ -520,7 +550,11 @@ function FileUploadBox({
         <img src={displayImage} alt="Preview" className="h-12 w-12 object-contain" />
         <div>
           <p className="text-sm font-medium">{selectedFile?.name || "Current Image"}</p>
-          {selectedFile && <p className="text-xs text-gray-500">{(selectedFile.size / (1024 * 1024)).toFixed(1)} MB</p>}
+          {selectedFile && (
+            <p className="text-xs text-gray-500">
+              {(selectedFile.size / (1024 * 1024)).toFixed(1)} MB
+            </p>
+          )}
         </div>
       </div>
       <button onClick={handleDelete} className="text-gray-500 hover:text-red-500">
@@ -528,28 +562,31 @@ function FileUploadBox({
       </button>
     </div>
   ) : (
-    <div {...getRootProps()} className={`transition border border-gray-300 border-dashed cursor-pointer rounded-xl h-[200px] p-7 lg:p-10 ${isDragActive ? "bg-gray-100" : "bg-gray-50"}`}>
+    <div
+      {...getRootProps()}
+      className={`transition border border-gray-300 border-dashed cursor-pointer rounded-xl h-[200px] p-7 lg:p-10 ${isDragActive ? "bg-gray-100" : "bg-gray-50"
+        }`}
+    >
       <input {...getInputProps()} />
       <div className="flex flex-col justify-center items-center text-center h-full gap-2">
-        <img src={Upload || "https://via.placeholder.com/50"} alt="Upload Icon" className="h-12 w-12 object-contain" />
+        <img
+          src={Upload || "https://via.placeholder.com/50"}
+          alt="Upload Icon"
+          className="h-12 w-12 object-contain"
+        />
         <p className="text-sm">
           {isDragActive ? "Drop Files or" : "Drag & Drop Files or"}{" "}
           <span className="font-medium underline text-brand-500">Browse File</span>
         </p>
-        <span className="text-sm text-gray-700">Supported: JPEG, PNG, GIF, PDF, MP4, etc.</span>
+        <span className="text-sm text-gray-700">
+          Supported: JPEG, PNG, GIF, PDF, MP4, etc.
+        </span>
       </div>
     </div>
   );
 }
 
-// DROPDOWN COMPONENT
-type CustomDropdownProps<T extends string> = {
-  label?: string;
-  options: T[];
-  value: T;
-  onSelect?: (value: T) => void;
-};
-
+// --- Custom Dropdown ---
 function CustomDropdown<T extends string>({
   label = "Pick an option",
   options = [],
@@ -569,15 +606,15 @@ function CustomDropdown<T extends string>({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleSelect = (value: T) => {
+  const handleSelect = (val: T) => {
     setIsOpen(false);
-    onSelect?.(value);
+    onSelect?.(val);
   };
 
   return (
     <div className="relative" ref={dropdownRef}>
       <button
-        onClick={() => setIsOpen((prev) => !prev)}
+        onClick={() => setIsOpen(prev => !prev)}
         className="peer w-full appearance-none rounded-md border border-gray-300 bg-[#F5F5F5] px-4 pr-10 py-2.5 text-left text-gray-400
         focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:bg-gray-800 dark:text-white dark:border-gray-600"
       >
@@ -593,7 +630,7 @@ function CustomDropdown<T extends string>({
 
       {isOpen && (
         <ul className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 shadow-lg">
-          {options.map((option) => (
+          {options.map(option => (
             <li
               key={option}
               onClick={() => handleSelect(option)}
