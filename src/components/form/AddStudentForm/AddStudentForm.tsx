@@ -9,45 +9,43 @@ import Upload from "../../../icons/Upload icon.png";
 import Uploadafter from "../../../icons/OIP.webp";
 import { toast } from 'react-hot-toast';
 
+const initialFormData = {
+  name: '',
+  last_name: '',
+  dob: '',
+  gender: '',
+  email: '',
+  phone: '',
+  alt_phone: '',
+  aadhar_number: '',
+  pan_number: '',
+  address: '',
+  pincode: '',
+  state: '',
+  department: '',
+  course: '',
+  year_of_passed: '',
+  experience: '',
+  department_stream: '',
+  course_duration: '',
+  join_date: '',
+  end_date: '',
+  course_enrolled: '',
+  batch: '',
+  tutor: ''
+};
+
+const initialDocuments = {
+  passport_photo: null as File | null,
+  pan_card: null as File | null,
+  aadhar_card: null as File | null,
+  sslc_marksheet: null as File | null,
+};
+
 export default function StudentAddForm() {
 
-  const [formData, setFormData] = useState({
-    name: '',
-    last_name: '',
-    dob: '',
-    gender: '',
-    email: '',
-    phone: '',
-    alt_phone: '',
-    aadhar_number: '',
-    pan_number: '',
-    address: '',
-    pincode: '',
-    state: '',
-    department: '',
-    course: '',
-    year_of_passed: '',
-    experience: '',
-    department_stream: '',
-    course_duration: '',
-    join_date: '',
-    end_date: '',
-    course_enrolled: '',
-    batch: '',
-    tutor: ''
-  });
-
-  const [documents, setDocuments] = useState<{
-    passport_photo: File | null;
-    pan_card: File | null;
-    aadhar_card: File | null;
-    sslc_marksheet: File | null;
-  }>({
-    passport_photo: null,
-    pan_card: null,
-    aadhar_card: null,
-    sslc_marksheet: null,
-  });
+  const [formData, setFormData] = useState(initialFormData);
+  const [documents, setDocuments] = useState(initialDocuments);
 
   const handleSubmit = async () => {
     setIsSubmitting(true); // ✅ Start loading
@@ -100,9 +98,9 @@ export default function StudentAddForm() {
 
       toast.success("Student inserted! ID: " + result.student_id);
 
-      // ✅ Reset form if needed
-      setFormData({});
-      setDocuments({});
+      // ✅ Reset using initial objects (fixes TS error)
+      setFormData(initialFormData);
+      setDocuments(initialDocuments);
       setErrors({});
     } catch (err: any) {
       if (err.response && err.response.status === 422) {
@@ -124,7 +122,6 @@ export default function StudentAddForm() {
       setIsSubmitting(false); // ✅ Always stop loading
     }
   };
-
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -844,24 +841,22 @@ export default function StudentAddForm() {
 }
 
 // DROPDOWN COMPONENT
-
 type CustomDropdownProps<T extends string> = {
   label?: string;
   options: T[];
   value: T; // controlled selected value
   onSelect?: (value: T) => void;
-  classsName?: string;
+  className?: string; // fixed typo
 };
 
 function CustomDropdown<T extends string>({
   label = "Select",
   options = [],
   value,
-  classsName = "",
+  className = "",
   onSelect,
 }: CustomDropdownProps<T>) {
   const [isOpen, setIsOpen] = useState(false);
-  const [selected, setSelected] = useState<T | "">("");
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -875,13 +870,12 @@ function CustomDropdown<T extends string>({
   }, []);
 
   const handleSelect = (value: T) => {
-    setSelected(value);
     setIsOpen(false);
     onSelect?.(value);
   };
 
   return (
-    <div className="relative" ref={dropdownRef}>
+    <div className={`relative ${className}`} ref={dropdownRef}>
       <button
         onClick={() => setIsOpen((prev) => !prev)}
         className="peer w-full appearance-none rounded-md border border-gray-300 bg-[#F5F5F5] px-4 pr-10 py-2.5 text-left text-gray-700
@@ -915,6 +909,7 @@ function CustomDropdown<T extends string>({
     </div>
   );
 }
+
 
 
 import { useCallback } from "react";
