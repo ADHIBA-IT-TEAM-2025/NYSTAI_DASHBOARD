@@ -557,7 +557,7 @@ export default function StudentAddForm() {
               {/* Year Of Passed */}
               <div className="space-y-6">
                 <div>
-                  <Label>Year Of Passed away</Label>
+                  <Label>Year Of Passed</Label>
                   <div className="relative">
                     <Input
                       placeholder="e.g. 2022"
