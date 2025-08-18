@@ -9,8 +9,6 @@ import Upload from "../../../icons/Upload icon.png";
 import Uploadafter from "../../../icons/OIP.webp";
 import { toast } from 'react-hot-toast';
 
-
-
 const initialFormData = {
   name: '',
   last_name: '',
