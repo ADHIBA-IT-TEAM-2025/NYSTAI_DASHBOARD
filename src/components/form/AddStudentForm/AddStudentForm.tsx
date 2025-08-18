@@ -9,45 +9,45 @@ import Upload from "../../../icons/Upload icon.png";
 import Uploadafter from "../../../icons/OIP.webp";
 import { toast } from 'react-hot-toast';
 
-export default function StudentAddForm() {
-  
-  const [formData, setFormData] = useState({
-    name: '',
-    last_name: '',
-    dob: '',
-    gender: '',
-    email: '',
-    phone: '',
-    alt_phone: '',
-    aadhar_number: '',
-    pan_number: '',
-    address: '',
-    pincode: '',
-    state: '',
-    department: '',
-    course: '',
-    year_of_passed: '',
-    experience: '',
-    department_stream: '',
-    course_duration: '',
-    join_date: '',
-    end_date: '',
-    course_enrolled: '',
-    batch: '',
-    tutor: ''
-  });
 
-  const [documents, setDocuments] = useState<{
-    passport_photo: File | null;
-    pan_card: File | null;
-    aadhar_card: File | null;
-    sslc_marksheet: File | null;
-  }>({
-    passport_photo: null,
-    pan_card: null,
-    aadhar_card: null,
-    sslc_marksheet: null,
-  });
+
+const initialFormData = {
+  name: '',
+  last_name: '',
+  dob: '',
+  gender: '',
+  email: '',
+  phone: '',
+  alt_phone: '',
+  aadhar_number: '',
+  pan_number: '',
+  address: '',
+  pincode: '',
+  state: '',
+  department: '',
+  course: '',
+  year_of_passed: '',
+  experience: '',
+  department_stream: '',
+  course_duration: '',
+  join_date: '',
+  end_date: '',
+  course_enrolled: '',
+  batch: '',
+  tutor: ''
+};
+
+const initialDocuments = {
+  passport_photo: null as File | null,
+  pan_card: null as File | null,
+  aadhar_card: null as File | null,
+  sslc_marksheet: null as File | null,
+};
+
+export default function StudentAddForm() {
+
+  const [formData, setFormData] = useState(initialFormData);
+  const [documents, setDocuments] = useState(initialDocuments);
 
   const handleSubmit = async () => {
     setIsSubmitting(true); // ✅ Start loading
@@ -97,13 +97,14 @@ export default function StudentAddForm() {
       if (!response.ok) {
         throw new Error(result.error || "Upload failed");
       }
-
       toast.success("Student inserted! ID: " + result.student_id);
 
-      // ✅ Reset form if needed
-      setFormData({});
-      setDocuments({});
+      // ✅ Reset using initial objects (fixes TS error)
+      setFormData(initialFormData);
+      setDocuments(initialDocuments);
       setErrors({});
+
+
     } catch (err: any) {
       if (err.response && err.response.status === 422) {
         const backendErrors = err.response.data.errors;
@@ -850,14 +851,14 @@ type CustomDropdownProps<T extends string> = {
   options: T[];
   value: T; // controlled selected value
   onSelect?: (value: T) => void;
-  classsName?: string;
+  className?: string; // fixed typo
 };
 
 function CustomDropdown<T extends string>({
   label = "Select",
   options = [],
   value,
-  classsName = "",
+  className = "",
   onSelect,
 }: CustomDropdownProps<T>) {
   const [isOpen, setIsOpen] = useState(false);
@@ -890,15 +891,12 @@ function CustomDropdown<T extends string>({
         {value || label}
       </button>
 
-      {/* Dropdown Icon */}
       <span
-        className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 transition-transform duration-200 ${isOpen ? "rotate-180" : ""
-          }`}
+        className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
       >
         <FontAwesomeIcon icon={faChevronDown} />
       </span>
 
-      {/* Dropdown List */}
       {isOpen && (
         <ul className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 shadow-lg">
           {options.map((option) => (
