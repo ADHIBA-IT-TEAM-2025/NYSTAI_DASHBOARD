@@ -851,10 +851,14 @@ type CustomDropdownProps<T extends string> = {
   options: T[];
   value: T; // controlled selected value
   onSelect?: (value: T) => void;
+<<<<<<< HEAD
+  className?: string;
+=======
   className?: string; // fixed typo
+>>>>>>> 5e19303db6f41736618d9a2712eedb6fdc9dcd2c
 };
 
-function CustomDropdown<T extends string>({
+export function CustomDropdown<T extends string>({
   label = "Select",
   options = [],
   value,
@@ -862,7 +866,6 @@ function CustomDropdown<T extends string>({
   onSelect,
 }: CustomDropdownProps<T>) {
   const [isOpen, setIsOpen] = useState(false);
-  const [selected, setSelected] = useState<T | "">("");
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -875,14 +878,13 @@ function CustomDropdown<T extends string>({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleSelect = (value: T) => {
-    setSelected(value);
+  const handleSelect = (val: T) => {
     setIsOpen(false);
-    onSelect?.(value);
+    onSelect?.(val);
   };
 
   return (
-    <div className="relative" ref={dropdownRef}>
+    <div className={`relative ${className}`} ref={dropdownRef}>
       <button
         onClick={() => setIsOpen((prev) => !prev)}
         className="peer w-full appearance-none rounded-md border border-gray-300 bg-[#F5F5F5] px-4 pr-10 py-2.5 text-left text-gray-700
