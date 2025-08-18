@@ -88,13 +88,13 @@ export default function Createtask() {
             <PageBreadcrumb
                 pageTitle="All Trainers"
                 pageTitleLink="/Trainers"
-                pageTitle1="Create Assignment"
+                pageTitle1="Create Assignments"
             />
 
             <div className="rounded-2xl border border-gray-200 bg-white">
                 <div className="p-6 space-y-6">
                     <h2 className="text-xl font-semibold">Assigned Task List</h2>
-                    <h3 className="text-l font-semibold py-4">Create Assignment</h3>
+                    <h3 className="text-l font-semibold py-4">Create Assignments</h3>
 
                     <div className="grid grid-cols-1 gap-6 xl:grid-cols-2 grid-rows-1">
                         {/* Left Inputs */}
