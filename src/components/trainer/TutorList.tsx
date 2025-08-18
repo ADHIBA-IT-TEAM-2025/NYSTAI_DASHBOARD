@@ -30,7 +30,6 @@ interface Tutor {
   img?: string;
 }
 
-
 export default function TutorList() {
   return (
     <>
@@ -189,41 +188,56 @@ function ProfileCards() {
 
   const handleUpdateTutor = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedTutor) return;
 
-    const updateUrl = `https://nystai-backend.onrender.com/NystaiTutors/updatetutor/${selectedTutor.tutor_id}`;
+    // 1️⃣ Check that a tutor is selected
+    if (!selectedTutor || !selectedTutor.tutor_id) {
+      toast.error("No tutor selected or tutor ID is invalid");
+      return;
+    }
+
+    const tutorId = Number(selectedTutor.tutor_id);
+
+    // 2️⃣ Verify ID is valid number
+    if (isNaN(tutorId) || tutorId <= 0) {
+      toast.error("Invalid tutor ID");
+      return;
+    }
+
+    const updateUrl = `https://nystai-backend.onrender.com/NystaiTutors/updatetutor/${tutorId}`;
 
     try {
       const formDataToSend = new FormData();
       formDataToSend.append("first_name", formData.first_name || "");
       formDataToSend.append("last_name", formData.last_name || "");
-      formDataToSend.append("dob", formData.dob ? String(formData.dob) : "");
+      formDataToSend.append("dob", formData.dob || "");
       formDataToSend.append("gender", formData.gender || "");
       formDataToSend.append("email", formData.email || "");
-      formDataToSend.append("phone", formData.phone || ""); // match backend key
+      formDataToSend.append("phone", formData.phone || "");
       formDataToSend.append("expertise", formData.expertise || "");
-      formDataToSend.append("experience_years", formData.experience_years ? String(formData.experience_years) : "0");
-      formDataToSend.append("joining_date", formData.joining_date ? String(formData.joining_date) : "");
+      formDataToSend.append(
+        "experience_years",
+        String(Number(formData.experience_years) || 0)
+      );
+      formDataToSend.append("joining_date", formData.joining_date || "");
 
+      // Optional image update
       if (selectedFile) {
         formDataToSend.append("tutor_image", selectedFile);
       } else if (isImageRemoved) {
         formDataToSend.append("remove_image", "true");
-        formDataToSend.append("tutor_image", "");
       }
 
-      // Debug
-      for (let [key, value] of formDataToSend.entries()) {
-        console.log(`${key}:`, value);
-      }
-
-      const res = await axios.patch(updateUrl, formDataToSend);
+      // 3️⃣ Send PATCH request
+      const res = await axios.patch(updateUrl, formDataToSend, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
 
       toast.success(res.data.message || "Tutor updated successfully");
 
-      setTeam(prev =>
-        prev.map(t =>
-          t.tutor_id === selectedTutor.tutor_id
+      // 4️⃣ Update local state
+      setTeam((prev) =>
+        prev.map((t) =>
+          t.tutor_id === tutorId
             ? {
               ...t,
               ...formData,
@@ -237,14 +251,22 @@ function ProfileCards() {
         )
       );
 
+      // 5️⃣ Reset edit modal state
       setIsEditOpen(false);
       setSelectedTutor(null);
       setSelectedFile(null);
       setIsImageRemoved(false);
     } catch (error: any) {
       console.error("Update Tutor Error:", error);
-      console.error("Error Response:", error?.response?.data);
-      toast.error(error?.response?.data?.message || "Failed to update tutor");
+
+      // 6️⃣ Handle 404 and other errors
+      if (error.response?.status === 404) {
+        toast.error(
+          "Tutor not found. Check the tutor ID and API route."
+        );
+      } else {
+        toast.error(error?.response?.data?.message || "Failed to update tutor");
+      }
     }
   };
 
@@ -593,7 +615,6 @@ interface CustomDropdownProps<T extends string> {
   value: T | string;
   onSelect?: (value: T) => void;
 }
-
 
 function CustomDropdown<T extends string>({
   label = "Pick an option",

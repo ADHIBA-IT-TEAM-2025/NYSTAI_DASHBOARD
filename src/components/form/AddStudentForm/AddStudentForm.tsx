@@ -50,34 +50,22 @@ export default function StudentAddForm() {
   });
 
   const handleSubmit = async () => {
+    setIsSubmitting(true); // ✅ Start loading
     const data = new FormData();
 
-    // Validate first
     const isValid = validateForm();
     if (!isValid) {
       toast.error("Please correct the errors");
+      setIsSubmitting(false);
       return;
     }
 
+    // Append text fields
     for (const key in formData) {
-      if (Object.prototype.hasOwnProperty.call(formData, key)) {
-        const value = formData[key as keyof typeof formData];
-
-        if (value !== undefined && value !== null && value !== "") {
-          if ((value as unknown) instanceof File)
- {
-            // File upload
-            data.append(key, value);
-          } else {
-            // Convert everything else to string
-            data.append(key, String(value));
-          }
-        }
-      }
+      data.append(key, formData[key as keyof typeof formData]);
     }
 
-
-    // Check required document uploads
+    // Check required documents
     if (
       !documents.passport_photo ||
       !documents.pan_card ||
@@ -85,19 +73,15 @@ export default function StudentAddForm() {
       !documents.sslc_marksheet
     ) {
       toast.error("Please upload all required documents.");
+      setIsSubmitting(false);
       return;
     }
 
-    // Append document files
+    // Append documents
     data.append("passport_photo", documents.passport_photo);
     data.append("pan_card", documents.pan_card);
     data.append("aadhar_card", documents.aadhar_card);
     data.append("sslc_marksheet", documents.sslc_marksheet);
-
-    // Debug: Log exactly what is being sent
-    for (let [key, value] of data.entries()) {
-      console.log(key, value);
-    }
 
     try {
       const response = await fetch(
@@ -111,30 +95,38 @@ export default function StudentAddForm() {
       const result = await response.json();
 
       if (!response.ok) {
-        if (result.errors && Array.isArray(result.errors)) {
-          const fieldErrors: { [key: string]: string } = {};
-          result.errors.forEach((error: { param: string; msg: string }) => {
-            fieldErrors[error.param] = error.msg;
-          });
-          setErrors(fieldErrors);
-          toast.error("Please fix the highlighted errors");
-        } else {
-          throw new Error(result.error || "Upload failed");
-        }
-        return;
+        throw new Error(result.error || "Upload failed");
       }
 
       toast.success("Student inserted! ID: " + result.student_id);
+
+      // ✅ Reset form if needed
+      setFormData({});
+      setDocuments({});
+      setErrors({});
     } catch (err: any) {
-      console.error("Upload error:", err);
-      toast.error("Error uploading student");
+      if (err.response && err.response.status === 422) {
+        const backendErrors = err.response.data.errors;
+        const fieldErrors: { [key: string]: string } = {};
+
+        backendErrors.forEach(
+          (error: { param: string; msg: string }) => {
+            fieldErrors[error.param] = error.msg;
+          }
+        );
+
+        setErrors(fieldErrors);
+        toast.error("Please fix the highlighted errors");
+      } else {
+        toast.error("Error uploading student");
+      }
+    } finally {
+      setIsSubmitting(false); // ✅ Always stop loading
     }
-
-    // Remove any reference to `req` here — frontend cannot access it
-
   };
 
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const validateForm = () => {
     const newErrors: { [key: string]: string } = {};
@@ -144,7 +136,13 @@ export default function StudentAddForm() {
     } else if (!/^[A-Za-z]{4,30}$/.test(formData.name)) {
       newErrors.name = "Name must be 4–30 letters only";
     }
-    
+
+    // if (!formData.last_name.trim()) {
+    //   newErrors.last_name = "Last name is required";
+    // } else if (!/^[A-Za-z]{4,30}$/.test(formData.last_name)) {
+    //   newErrors.last_name = "Last name must be 4–30 letters only";
+    // }
+
     if (!formData.last_name) {
       newErrors.last_name = "last Name is required";
     }
@@ -826,10 +824,12 @@ export default function StudentAddForm() {
             {/* BTN  */}
             <div className="grid xl:grid-cols-2 gap-6">
               <div className="col-span-full flex justify-center">
-                <button onClick={handleSubmit}
-                  className="flex items-center justify-center px-32 py-3 font-medium text-dark rounded-lg bg-[#F8C723] text-theme-sm hover:bg-brand-600"
+                <button
+                  onClick={handleSubmit}
+                  disabled={isSubmitting}
+                  className=" text-white px-4 py-2 rounded disabled:opacity-60 flex items-center justify-center px-32 py-3 font-medium text-dark rounded-lg bg-[#F8C723] text-theme-sm hover:bg-brand-60"
                 >
-                  CLICK TO REGISTER
+                  {isSubmitting ? "Submitting..." : "Submit"}
                 </button>
               </div>
             </div>
@@ -847,19 +847,21 @@ export default function StudentAddForm() {
 
 type CustomDropdownProps<T extends string> = {
   label?: string;
-  options?: T[];
-  value: T | "";
+  options: T[];
+  value: T; // controlled selected value
   onSelect?: (value: T) => void;
-  className?: string; // ✅ add this
+  classsName?: string;
 };
+
 function CustomDropdown<T extends string>({
   label = "Select",
   options = [],
   value,
-  className = "",
+  classsName = "",
   onSelect,
 }: CustomDropdownProps<T>) {
   const [isOpen, setIsOpen] = useState(false);
+  const [selected, setSelected] = useState<T | "">("");
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -873,12 +875,13 @@ function CustomDropdown<T extends string>({
   }, []);
 
   const handleSelect = (value: T) => {
+    setSelected(value);
     setIsOpen(false);
     onSelect?.(value);
   };
 
   return (
-    <div className={`relative ${className}`} ref={dropdownRef}>
+    <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen((prev) => !prev)}
         className="peer w-full appearance-none rounded-md border border-gray-300 bg-[#F5F5F5] px-4 pr-10 py-2.5 text-left text-gray-700
@@ -887,12 +890,15 @@ function CustomDropdown<T extends string>({
         {value || label}
       </button>
 
+      {/* Dropdown Icon */}
       <span
-        className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
+        className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 transition-transform duration-200 ${isOpen ? "rotate-180" : ""
+          }`}
       >
         <FontAwesomeIcon icon={faChevronDown} />
       </span>
 
+      {/* Dropdown List */}
       {isOpen && (
         <ul className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 shadow-lg">
           {options.map((option) => (
@@ -909,8 +915,6 @@ function CustomDropdown<T extends string>({
     </div>
   );
 }
-
-
 
 
 import { useCallback } from "react";
