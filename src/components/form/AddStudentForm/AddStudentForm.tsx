@@ -851,12 +851,9 @@ type CustomDropdownProps<T extends string> = {
   options: T[];
   value: T; // controlled selected value
   onSelect?: (value: T) => void;
-<<<<<<< HEAD
-  className?: string;
-=======
-  className?: string; // fixed typo
->>>>>>> 5e19303db6f41736618d9a2712eedb6fdc9dcd2c
+  className?: string; // optional comment if desired
 };
+
 
 export function CustomDropdown<T extends string>({
   label = "Select",
