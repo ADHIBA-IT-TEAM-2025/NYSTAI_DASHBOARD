@@ -9,7 +9,6 @@ import Label from "../form/Label";
 import Input from "../form/input/InputField";
 import { useDropzone } from "react-dropzone";
 import Upload from "../../icons/Upload icon.png";
-import Uploadafter from "../../icons/OIP.webp";
 import { toast } from "react-hot-toast";
 import DatePicker from "../form/date-picker";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -17,8 +16,11 @@ import { faChevronDown } from "@fortawesome/free-solid-svg-icons";
 
 interface Tutor {
   tutor_id: number;
+  first_name?: string;
+  last_name?: string;
   name: string;
   dob: string;
+  role?: string;
   gender: string;
   email: string;
   contact: string;
@@ -28,13 +30,6 @@ interface Tutor {
   img?: string;
 }
 
-interface EditTutorModalProps {
-  isEditOpen: boolean;
-  setIsEditOpen: (val: boolean) => void;
-  selectedTutor: Tutor | null;
-  setSelectedTutor: (tutor: Tutor | null) => void;
-  setTeam: React.Dispatch<React.SetStateAction<Tutor[]>>;
-}
 
 export default function TutorList() {
   return (
@@ -98,8 +93,6 @@ function ProfileCards() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isImageRemoved, setIsImageRemoved] = useState(false);
 
-  const [errors, setErrors] = useState<{ image?: string }>({});
-
   useEffect(() => {
     const fetchTeamData = async () => {
       try {
@@ -128,15 +121,22 @@ function ProfileCards() {
           setTeam([
             {
               tutor_id: res.data.tutor.tutor_id,
-              name: `${res.data.tutor.first_name} ${res.data.tutor.last_name}`,
+              first_name: res.data.tutor.first_name ?? "",
+              last_name: res.data.tutor.last_name ?? "",
+              name: `${res.data.tutor.first_name ?? ""} ${res.data.tutor.last_name ?? ""}`,
               role: res.data.tutor.expertise ?? "",
               email: res.data.tutor.email ?? "",
               contact: res.data.tutor.phone ?? "",
               expertise: res.data.tutor.expertise ?? "",
               img: res.data.tutor.tutor_image ?? "",
+              dob: res.data.tutor.dob ?? "",
+              gender: res.data.tutor.gender ?? "",
+              joining_date: res.data.tutor.joining_date ?? "",
+              experience_years: res.data.tutor.experience_years ?? "",
             },
           ]);
         }
+
       } catch (error) {
         console.error("Error fetching team data:", error);
       } finally {
@@ -152,19 +152,6 @@ function ProfileCards() {
     setIsDeleteOpen(true);
   };
 
-
-
-
-
-
-
-
-
-
-
-
-
-  
   const handleDeleteTutor = async () => {
     if (!selectedTutor) return;
     try {
@@ -387,7 +374,8 @@ function ProfileCards() {
                   <CustomDropdown
                     options={["Male", "Female", "Other"]}
                     value={formData.gender}
-                    onSelect={(value) => setFormData(prev => ({ ...prev, gender: value }))}
+                    onSelect={(value: string) => setFormData(prev => ({ ...prev, gender: value }))}
+
                   />
                 </div>
               </div>
@@ -599,7 +587,14 @@ function FileUploadBox({
   );
 }
 
-// --- Custom Dropdown ---
+interface CustomDropdownProps<T extends string> {
+  label?: string;
+  options: T[];
+  value: T | string;
+  onSelect?: (value: T) => void;
+}
+
+
 function CustomDropdown<T extends string>({
   label = "Pick an option",
   options = [],

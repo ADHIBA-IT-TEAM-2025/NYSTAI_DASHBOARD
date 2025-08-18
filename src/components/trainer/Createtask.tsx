@@ -7,9 +7,8 @@ import DatePicker from "../form/date-picker.tsx";
 import axios from "axios";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faChevronDown } from "@fortawesome/free-solid-svg-icons";
-import toast, { Toaster } from "react-hot-toast"; // ✅ Toast library
-import { Link } from "react-router";
-import { Menu, MoreVertical } from "lucide-react";
+import toast from "react-hot-toast"; 
+import { MoreVertical } from "lucide-react";
 
 export default function Createtask() {
     const [formData, setFormData] = useState({
@@ -135,7 +134,7 @@ export default function Createtask() {
                                 <DatePicker
                                     id="due_date"
                                     placeholder="Select Deadline"
-                                    value={formData.due_date ? new Date(formData.due_date) : null}
+                                    value={formData.due_date ? new Date(formData.due_date) : undefined}
                                     onChange={(date) => {
                                         const selectedDate = Array.isArray(date) ? date[0] : date;
                                         if (selectedDate) {

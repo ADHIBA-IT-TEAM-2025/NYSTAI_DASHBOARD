@@ -59,14 +59,23 @@ export default function StudentAddForm() {
       return;
     }
 
-    // Append normal text fields from formData
     for (const key in formData) {
-      const value = formData[key as keyof typeof formData];
-      if (value !== undefined && value !== null && value !== "") {
-        // Convert non-file values to string
-        data.append(key, value instanceof File ? value : String(value));
+      if (Object.prototype.hasOwnProperty.call(formData, key)) {
+        const value = formData[key as keyof typeof formData];
+
+        if (value !== undefined && value !== null && value !== "") {
+          if ((value as unknown) instanceof File)
+ {
+            // File upload
+            data.append(key, value);
+          } else {
+            // Convert everything else to string
+            data.append(key, String(value));
+          }
+        }
       }
     }
+
 
     // Check required document uploads
     if (
@@ -125,10 +134,7 @@ export default function StudentAddForm() {
 
   };
 
-
-
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
-
 
   const validateForm = () => {
     const newErrors: { [key: string]: string } = {};
@@ -138,13 +144,7 @@ export default function StudentAddForm() {
     } else if (!/^[A-Za-z]{4,30}$/.test(formData.name)) {
       newErrors.name = "Name must be 4–30 letters only";
     }
-
-    // if (!formData.last_name.trim()) {
-    //   newErrors.last_name = "Last name is required";
-    // } else if (!/^[A-Za-z]{4,30}$/.test(formData.last_name)) {
-    //   newErrors.last_name = "Last name must be 4–30 letters only";
-    // }
-
+    
     if (!formData.last_name) {
       newErrors.last_name = "last Name is required";
     }
@@ -847,21 +847,19 @@ export default function StudentAddForm() {
 
 type CustomDropdownProps<T extends string> = {
   label?: string;
-  options: T[];
-  value: T; // controlled selected value
+  options?: T[];
+  value: T | "";
   onSelect?: (value: T) => void;
-  classsName?: string;
+  className?: string; // ✅ add this
 };
-
 function CustomDropdown<T extends string>({
   label = "Select",
   options = [],
   value,
-  classsName = "",
+  className = "",
   onSelect,
 }: CustomDropdownProps<T>) {
   const [isOpen, setIsOpen] = useState(false);
-  const [selected, setSelected] = useState<T | "">("");
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -875,13 +873,12 @@ function CustomDropdown<T extends string>({
   }, []);
 
   const handleSelect = (value: T) => {
-    setSelected(value);
     setIsOpen(false);
     onSelect?.(value);
   };
 
   return (
-    <div className="relative" ref={dropdownRef}>
+    <div className={`relative ${className}`} ref={dropdownRef}>
       <button
         onClick={() => setIsOpen((prev) => !prev)}
         className="peer w-full appearance-none rounded-md border border-gray-300 bg-[#F5F5F5] px-4 pr-10 py-2.5 text-left text-gray-700
@@ -890,15 +887,12 @@ function CustomDropdown<T extends string>({
         {value || label}
       </button>
 
-      {/* Dropdown Icon */}
       <span
-        className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 transition-transform duration-200 ${isOpen ? "rotate-180" : ""
-          }`}
+        className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
       >
         <FontAwesomeIcon icon={faChevronDown} />
       </span>
 
-      {/* Dropdown List */}
       {isOpen && (
         <ul className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 shadow-lg">
           {options.map((option) => (
@@ -915,6 +909,8 @@ function CustomDropdown<T extends string>({
     </div>
   );
 }
+
+
 
 
 import { useCallback } from "react";
