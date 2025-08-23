@@ -10,124 +10,44 @@ import Uploadafter from "../../../icons/OIP.webp";
 import { toast } from 'react-hot-toast';
 
 
-const initialFormData = {
-  name: '',
-  last_name: '',
-  dob: '',
-  gender: '',
-  email: '',
-  phone: '',
-  alt_phone: '',
-  aadhar_number: '',
-  pan_number: '',
-  address: '',
-  pincode: '',
-  state: '',
-  department: '',
-  course: '',
-  year_of_passed: '',
-  experience: '',
-  department_stream: '',
-  course_duration: '',
-  join_date: '',
-  end_date: '',
-  course_enrolled: '',
-  batch: '',
-  tutor: ''
-};
-
-const initialDocuments = {
-  passport_photo: null as File | null,
-  pan_card: null as File | null,
-  aadhar_card: null as File | null,
-  sslc_marksheet: null as File | null,
-};
-
 export default function StudentAddForm() {
+  const [formData, setFormData] = useState({
+    name: "",
+    last_name: "",
+    dob: "",
+    gender: "",
+    email: "",
+    phone: "",
+    alt_phone: "",
+    aadhar_number: "",
+    pan_number: "",
+    address: "",
+    pincode: "",
+    state: "",
+    department: "",
+    course: "",
+    year_of_passed: "",
+    experience: "",
+    department_stream: "",
+    course_duration: "",
+    join_date: "",
+    end_date: "",
+    course_enrolled: "",
+    batch: "",
+    tutor: "",
+  });
 
-  const [formData, setFormData] = useState(initialFormData);
-  const [documents, setDocuments] = useState(initialDocuments);
-
-  const handleSubmit = async () => {
-    setIsSubmitting(true); // ✅ Start loading
-    const data = new FormData();
-
-    const isValid = validateForm();
-    if (!isValid) {
-      toast.error("Please correct the errors");
-      setIsSubmitting(false);
-      return;
-    }
-
-    // Append text fields
-    for (const key in formData) {
-      data.append(key, formData[key as keyof typeof formData]);
-    }
-
-    // Check required documents
-    if (
-      !documents.passport_photo ||
-      !documents.pan_card ||
-      !documents.aadhar_card ||
-      !documents.sslc_marksheet
-    ) {
-      toast.error("Please upload all required documents.");
-      setIsSubmitting(false);
-      return;
-    }
-
-    // Append documents
-    data.append("passport_photo", documents.passport_photo);
-    data.append("pan_card", documents.pan_card);
-    data.append("aadhar_card", documents.aadhar_card);
-    data.append("sslc_marksheet", documents.sslc_marksheet);
-
-    try {
-      const response = await fetch(
-        "https://nystai-backend.onrender.com/insert-student",
-        {
-          method: "POST",
-          body: data,
-        }
-      );
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || "Upload failed");
-      }
-      toast.success("Student inserted! ID: " + result.student_id);
-
-      // ✅ Reset using initial objects (fixes TS error)
-      setFormData(initialFormData);
-      setDocuments(initialDocuments);
-      setErrors({});
-
-
-    } catch (err: any) {
-      if (err.response && err.response.status === 422) {
-        const backendErrors = err.response.data.errors;
-        const fieldErrors: { [key: string]: string } = {};
-
-        backendErrors.forEach(
-          (error: { param: string; msg: string }) => {
-            fieldErrors[error.param] = error.msg;
-          }
-        );
-
-        setErrors(fieldErrors);
-        toast.error("Please fix the highlighted errors");
-      } else {
-        toast.error("Error uploading student");
-      }
-    } finally {
-      setIsSubmitting(false); // ✅ Always stop loading
-    }
-  };
+  const [documents, setDocuments] = useState({
+    passport_photo: null as File | null,
+    pan_card: null as File | null,
+    aadhar_card: null as File | null,
+    sslc_marksheet: null as File | null,
+  });
 
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // ✅ Validation function
   const validateForm = () => {
     const newErrors: { [key: string]: string } = {};
 
@@ -148,20 +68,21 @@ export default function StudentAddForm() {
     if (!formData.dob) {
       newErrors.dob = "Date of birth is required";
     } else {
-      const age = new Date().getFullYear() - new Date(formData.dob).getFullYear();
+      const age =
+        new Date().getFullYear() - new Date(formData.dob).getFullYear();
       if (age < 21) {
         newErrors.dob = "Student must be at least 21 years old";
       }
     }
 
-    if (!formData.gender) {
-      newErrors.gender = "Gender is required";
-    }
+    if (!formData.gender) newErrors.gender = "Gender is required";
 
     if (!formData.email) {
       newErrors.email = "Email is required";
     } else if (
-      !/^[\w-.]+@(gmail\.com|yahoo\.com|outlook\.com|[\w-]+\.org)$/.test(formData.email)
+      !/^[\w-.]+@(gmail\.com|yahoo\.com|outlook\.com|[\w-]+\.org)$/.test(
+        formData.email
+      )
     ) {
       newErrors.email = "Invalid or unsupported email domain";
     }
@@ -205,7 +126,8 @@ export default function StudentAddForm() {
     if (!formData.department_stream.trim()) {
       newErrors.department_stream = "Department / Stream is required";
     } else if (!/^[A-Za-z0-9 ]+$/.test(formData.department_stream)) {
-      newErrors.department_stream = "Only letters and numbers allowed. No special characters.";
+      newErrors.department_stream =
+        "Only letters and numbers allowed. No special characters.";
     }
 
     if (!formData.course_duration.trim()) {
@@ -224,20 +146,64 @@ export default function StudentAddForm() {
     if (!formData.batch) newErrors.batch = "Batch is required";
     if (!formData.tutor) newErrors.tutor = "Tutor is required";
 
-    if (!documents.passport_photo) newErrors.passport_photo = "Passport photo is required";
+    if (!documents.passport_photo)
+      newErrors.passport_photo = "Passport photo is required";
     if (!documents.pan_card) newErrors.pan_card = "PAN card is required";
-    if (!documents.aadhar_card) newErrors.aadhar_card = "Aadhar card is required";
-    if (!documents.sslc_marksheet) newErrors.sslc_marksheet = "SSLC marksheet is required";
+    if (!documents.aadhar_card)
+      newErrors.aadhar_card = "Aadhar card is required";
+    if (!documents.sslc_marksheet)
+      newErrors.sslc_marksheet = "SSLC marksheet is required";
 
     setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
-    // 🔥 Show all errors in toast
-    if (Object.keys(newErrors).length > 0) {
-      Object.values(newErrors).forEach((errMsg) => toast.error(errMsg));
-      return false;
+  // ✅ Handle submit
+  const handleSubmit = async () => {
+    if (!validateForm()) {
+      toast.error("Please fix the validation errors.");
+      return;
     }
 
-    return true;
+    setIsSubmitting(true);
+    const data = new FormData();
+
+    for (const key in formData) {
+      data.append(key, formData[key as keyof typeof formData]);
+    }
+
+    if (documents.passport_photo)
+      data.append("passport_photo", documents.passport_photo);
+    if (documents.pan_card) data.append("pan_card", documents.pan_card);
+    if (documents.aadhar_card) data.append("aadhar_card", documents.aadhar_card);
+    if (documents.sslc_marksheet)
+      data.append("sslc_marksheet", documents.sslc_marksheet);
+
+    try {
+      const response = await fetch(
+        "https://nystai-backend.onrender.com/insert-student",
+        {
+          method: "POST",
+          body: data,
+        }
+      );
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Server Error ${response.status}: ${errorText}`);
+      }
+
+      const result = await response.json();
+      toast.success("Student inserted! ID: " + result.student_id);
+    } catch (err: any) {
+      if (err.name === "TypeError") {
+        toast.error("Network/CORS error: Backend not reachable");
+      } else {
+        toast.error(err.message || "Unexpected error");
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -781,7 +747,6 @@ export default function StudentAddForm() {
               Upload Documents
             </h3>
 
-
             {/* UPLOAD IMAGE  */}
             <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
               <div className="space-y-6">
@@ -798,7 +763,8 @@ export default function StudentAddForm() {
                   <p className="text-red-500 text-sm mt-1">{errors.aadhar_card}</p>
                 )}
               </div>
-            </div>
+                  </div>
+                  
             <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
               <div className="space-y-6">
                 <Label> SSLC Marksheet</Label>
@@ -828,7 +794,6 @@ export default function StudentAddForm() {
                 </button>
               </div>
             </div>
-
 
           </div>
         </div>

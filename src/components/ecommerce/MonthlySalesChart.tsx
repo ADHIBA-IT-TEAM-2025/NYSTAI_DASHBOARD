@@ -1,29 +1,24 @@
+import { useEffect, useState } from "react";
 import Chart from "react-apexcharts";
 import { ApexOptions } from "apexcharts";
 
 export default function MonthlySalesChart() {
+  const [categories, setCategories] = useState<string[]>([]);
+  const [series, setSeries] = useState<{ name: string; data: number[] }[]>([
+    { name: "Students", data: [] },
+  ]);
+  const [loading, setLoading] = useState(true);
+
   const options: ApexOptions = {
     colors: [
-      "#EF3A59", // 1 - Pinkish Red
-      "#FF2E00", // 2 - Vivid Red-Orange
-      "#FF7043", // 3 - Warm Orange
-      "#FF5733", // 4 - Soft Red-Orange
-      "#C62828", // 5 - Deep Red
-      "#C16A6A", // 6 - Muted Brick Red
-      "#EF3A59", // 7 - Repeated
-      "#FF2E00", // 8 - Repeated
-      "#FF7043", // 9 - Repeated
-      "#FF5733", //10 - Repeated
-      "#C62828", //11 - Repeated
-      "#C16A6A", //12 - Repeated
+      "#EF3A59", "#FF2E00", "#FF7043", "#FF5733", "#C62828", "#C16A6A",
+      "#EF3A59", "#FF2E00", "#FF7043", "#FF5733", "#C62828", "#C16A6A",
     ],
     chart: {
       fontFamily: "kabob",
       type: "bar",
       height: 180,
-      toolbar: {
-        show: false,
-      },
+      toolbar: { show: false },
     },
     plotOptions: {
       bar: {
@@ -31,76 +26,84 @@ export default function MonthlySalesChart() {
         columnWidth: "39%",
         borderRadius: 5,
         borderRadiusApplication: "end",
-        distributed: true, // Allow color per bar
+        distributed: true,
       },
     },
-    dataLabels: {
-      enabled: false,
-    },
-    stroke: {
-      show: true,
-      width: 4,
-      colors: ["transparent"],
-    },
+    dataLabels: { enabled: false },
+    stroke: { show: true, width: 4, colors: ["transparent"] },
     xaxis: {
-      categories: [
-        "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
-      ],
-      axisBorder: {
-        show: false,
-      },
-      axisTicks: {
-        show: false,
-      },
+      categories, // dynamic months (last 6)
+      axisBorder: { show: false },
+      axisTicks: { show: false },
     },
-    legend: {
-      show: false, // Optional: since it's just one series
-    },
-    yaxis: {
-      title: {
-        text: undefined,
-      },
-    },
-    grid: {
-      yaxis: {
-        lines: {
-          show: true,
-        },
-      },
-    },
-    fill: {
-      opacity: 1,
-    },
+    legend: { show: false },
+    yaxis: { title: { text: undefined } },
+    grid: { yaxis: { lines: { show: true } } },
+    fill: { opacity: 1 },
     tooltip: {
-      x: {
-        show: false,
-      },
-      y: {
-        formatter: (val: number) => `${val}`,
-      },
+      x: { show: true },
+      y: { formatter: (val: number) => `${val}` },
     },
   };
 
-  const series = [
-    {
-      name: "Sales",
-      data: [168, 385, 201, 298, 187, 195, 291, 110, 215, 390, 280, 112],
-    },
-  ];
+  // Helper to generate last 6 months
+  const getLastSixMonths = () => {
+    const months: string[] = [];
+    const date = new Date();
 
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(date.getFullYear(), date.getMonth() - i, 1);
+      const month = d.toLocaleString("en-US", { month: "short" });
+      const year = d.getFullYear();
+      months.push(`${month} ${year}`);
+    }
+    return months;
+  };
+
+  // Fetch API data
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const res = await fetch("https://nystai-backend.onrender.com/students/last-six-months");
+        const json = await res.json();
+
+        if (json?.success && Array.isArray(json.data)) {
+          const apiData: Record<string, number> = {};
+          json.data.forEach((item: any) => {
+            apiData[item.month] = item.student_count;
+          });
+
+          const lastSix = getLastSixMonths();
+          const counts = lastSix.map((m) => apiData[m] || 0);
+
+          setCategories(lastSix);
+          setSeries([{ name: "Students", data: counts }]);
+        }
+      } catch (err) {
+        console.error("Failed to fetch chart data:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   return (
     <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white px-5 pt-5 dark:border-gray-800 dark:bg-white/[0.03] sm:px-6 sm:pt-6 ">
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
-          Monthly Sales
+          Monthly Students
         </h3>
       </div>
 
       <div className="max-w-full overflow-x-auto custom-scrollbar">
         <div className="-ml-5 min-w-[650px] xl:min-w-full pl-2">
-          <Chart options={options} series={series} type="bar" height={340} />
+          {loading ? (
+            <p className="text-gray-500">Loading...</p>
+          ) : (
+            <Chart options={options} series={series} type="bar" height={340} />
+          )}
         </div>
       </div>
     </div>
