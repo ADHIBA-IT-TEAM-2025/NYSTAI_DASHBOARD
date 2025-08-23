@@ -2,7 +2,7 @@ import EcommerceMetrics from "../../components/ecommerce/EcommerceMetrics";
 import MonthlySalesChart from "../../components/ecommerce/MonthlySalesChart";
 import MonthlyTarget from "../../components/ecommerce/MonthlyTarget";
 import PageMeta from "../../components/common/PageMeta";
-import Studentlist from "../studentlist/studentlist";
+import BasicTableOne from "../../components/studentlist/studentlist";
 
 export default function Home() {
   return (
@@ -25,7 +25,7 @@ export default function Home() {
         </div>
 
         <div className="col-span-12">
-          <Studentlist />
+          <BasicTableOne />
         </div>
 
       </div>

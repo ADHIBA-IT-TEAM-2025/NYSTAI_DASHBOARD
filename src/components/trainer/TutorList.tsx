@@ -78,6 +78,7 @@ function ProfileCards() {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [selectedTutor, setSelectedTutor] = useState<Tutor | null>(null);
+  const [isUpdating, setIsUpdating] = useState(false);
   const [formData, setFormData] = useState({
     first_name: "",
     last_name: "",
@@ -188,85 +189,52 @@ function ProfileCards() {
 
   const handleUpdateTutor = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!selectedTutor) return;
 
-    // 1️⃣ Check that a tutor is selected
-    if (!selectedTutor || !selectedTutor.tutor_id) {
-      toast.error("No tutor selected or tutor ID is invalid");
-      return;
-    }
+    setIsUpdating(true);
 
     const tutorId = Number(selectedTutor.tutor_id);
-
-    // 2️⃣ Verify ID is valid number
-    if (isNaN(tutorId) || tutorId <= 0) {
-      toast.error("Invalid tutor ID");
-      return;
-    }
-
     const updateUrl = `https://nystai-backend.onrender.com/NystaiTutors/updatetutor/${tutorId}`;
 
     try {
-      const formDataToSend = new FormData();
-      formDataToSend.append("first_name", formData.first_name || "");
-      formDataToSend.append("last_name", formData.last_name || "");
-      formDataToSend.append("dob", formData.dob || "");
-      formDataToSend.append("gender", formData.gender || "");
-      formDataToSend.append("email", formData.email || "");
-      formDataToSend.append("phone", formData.phone || "");
-      formDataToSend.append("expertise", formData.expertise || "");
-      formDataToSend.append(
-        "experience_years",
-        String(Number(formData.experience_years) || 0)
-      );
-      formDataToSend.append("joining_date", formData.joining_date || "");
+      let payload: any;
+      let headers: any;
 
-      // Optional image update
-      if (selectedFile) {
-        formDataToSend.append("tutor_image", selectedFile);
-      } else if (isImageRemoved) {
-        formDataToSend.append("remove_image", "true");
+      if (selectedFile || isImageRemoved) {
+        payload = new FormData();
+        Object.entries(formData).forEach(([key, value]) => {
+          payload.append(key, String(value));
+        });
+        if (selectedFile) payload.append("tutor_image", selectedFile);
+        if (isImageRemoved) payload.append("remove_image", "true");
+        headers = { "Content-Type": "multipart/form-data" };
+      } else {
+        payload = { ...formData };
+        headers = { "Content-Type": "application/json" };
       }
 
-      // 3️⃣ Send PATCH request
-      const res = await axios.patch(updateUrl, formDataToSend, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+      const res = await axios.put(updateUrl, payload, { headers });
 
       toast.success(res.data.message || "Tutor updated successfully");
 
-      // 4️⃣ Update local state
+      // Update team state
       setTeam((prev) =>
         prev.map((t) =>
           t.tutor_id === tutorId
-            ? {
-              ...t,
-              ...formData,
-              img: selectedFile
-                ? URL.createObjectURL(selectedFile)
-                : isImageRemoved
-                  ? ""
-                  : t.img,
-            }
+            ? { ...t, ...formData, img: selectedFile ? URL.createObjectURL(selectedFile) : isImageRemoved ? "" : t.img }
             : t
         )
       );
 
-      // 5️⃣ Reset edit modal state
       setIsEditOpen(false);
       setSelectedTutor(null);
       setSelectedFile(null);
       setIsImageRemoved(false);
     } catch (error: any) {
       console.error("Update Tutor Error:", error);
-
-      // 6️⃣ Handle 404 and other errors
-      if (error.response?.status === 404) {
-        toast.error(
-          "Tutor not found. Check the tutor ID and API route."
-        );
-      } else {
-        toast.error(error?.response?.data?.message || "Failed to update tutor");
-      }
+      toast.error(error?.response?.data?.message || "Failed to update tutor");
+    } finally {
+      setIsUpdating(false);
     }
   };
 
@@ -396,8 +364,9 @@ function ProfileCards() {
                   <CustomDropdown
                     options={["Male", "Female", "Other"]}
                     value={formData.gender}
-                    onSelect={(value: string) => setFormData(prev => ({ ...prev, gender: value }))}
-
+                    onSelect={(value) =>
+                      setFormData((prev) => ({ ...prev, gender: value }))
+                    }
                   />
                 </div>
               </div>
@@ -502,9 +471,10 @@ function ProfileCards() {
                 </button>
                 <button
                   type="submit"
+                  disabled={isUpdating}
                   className="flex items-center gap-2 rounded-2xl border border-gray-300 bg-[#F8C723] px-10 py-2 text-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 hover:text-gray-800"
                 >
-                  Update Tutor
+                  {isUpdating ? "Updating..." : "Update Tutor"}
                 </button>
               </div>
             </form>
@@ -531,26 +501,14 @@ function ProfileCards() {
   );
 }
 
-function FileUploadBox({
-  selectedFile,
-  setSelectedFile,
-  previewImage,
-  isImageRemoved,
-  setIsImageRemoved,
-}: {
+function FileUploadBox({ selectedFile, setSelectedFile, previewImage, isImageRemoved, setIsImageRemoved, }: {
   selectedFile: File | null;
   setSelectedFile: React.Dispatch<React.SetStateAction<File | null>>;
   previewImage?: string | null;
   isImageRemoved: boolean;
   setIsImageRemoved: React.Dispatch<React.SetStateAction<boolean>>;
 }) {
-  const onDrop = useCallback(
-    (acceptedFiles: File[]) => {
-      if (acceptedFiles.length > 0) {
-        setSelectedFile(acceptedFiles[0]);
-        setIsImageRemoved(false);
-      }
-    },
+  const onDrop = useCallback((acceptedFiles: File[]) => { if (acceptedFiles.length > 0) { setSelectedFile(acceptedFiles[0]); setIsImageRemoved(false); } },
     [setSelectedFile, setIsImageRemoved]
   );
 
@@ -609,12 +567,12 @@ function FileUploadBox({
   );
 }
 
-interface CustomDropdownProps<T extends string> {
+type CustomDropdownProps<T extends string> = {
   label?: string;
   options: T[];
-  value: T | string;
+  value: T;
   onSelect?: (value: T) => void;
-}
+};
 
 function CustomDropdown<T extends string>({
   label = "Pick an option",
@@ -636,16 +594,19 @@ function CustomDropdown<T extends string>({
   }, []);
 
   const handleSelect = (val: T) => {
-    setIsOpen(false);
+    // Only update selected value
     onSelect?.(val);
+    setIsOpen(false); // just close dropdown
   };
+
 
   return (
     <div className="relative" ref={dropdownRef}>
       <button
-        onClick={() => setIsOpen(prev => !prev)}
+        type="button"
+        onClick={() => setIsOpen((prev) => !prev)}
         className="peer w-full appearance-none rounded-md border border-gray-300 bg-[#F5F5F5] px-4 pr-10 py-2.5 text-left text-gray-400
-        focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:bg-gray-800 dark:text-white dark:border-gray-600"
+          focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:bg-gray-800 dark:text-white dark:border-gray-600"
       >
         {value || label}
       </button>
@@ -659,10 +620,14 @@ function CustomDropdown<T extends string>({
 
       {isOpen && (
         <ul className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 shadow-lg">
-          {options.map(option => (
+          {options.map((option) => (
             <li
               key={option}
-              onClick={() => handleSelect(option)}
+              onClick={(e) => {
+                e.stopPropagation(); // Prevent document click
+                e.preventDefault();  // Prevent form submit
+                handleSelect(option);
+              }}
               className="cursor-pointer px-4 py-2 text-sm text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
             >
               {option}

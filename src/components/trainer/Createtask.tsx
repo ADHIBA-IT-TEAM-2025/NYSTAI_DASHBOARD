@@ -7,8 +7,10 @@ import DatePicker from "../form/date-picker.tsx";
 import axios from "axios";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faChevronDown } from "@fortawesome/free-solid-svg-icons";
-import toast from "react-hot-toast"; 
-import { MoreVertical } from "lucide-react";
+import toast from "react-hot-toast";
+import { MoreVertical, Trash2, X } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Modal } from "../ui/modal/index.tsx";
 
 export default function Createtask() {
     const [formData, setFormData] = useState({
@@ -194,6 +196,9 @@ interface Task {
 function Showtask() {
     const [tasks, setTasks] = useState<Task[]>([]);
     const [loading, setLoading] = useState(false);
+    const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+    const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
+    const navigate = useNavigate();
 
     const fetchTasks = async () => {
         setLoading(true);
@@ -202,7 +207,19 @@ function Showtask() {
                 "https://nystai-backend.onrender.com/Students-Tasks/assigned-tasks",
                 { headers: { "Content-Type": "application/json" } }
             );
-            setTasks(response.data.tasks || []); // Adjust based on backend response
+
+            console.log("Tasks from API:", response.data.tasks);
+
+            const normalizedTasks = (response.data.tasks || []).map((task: any, index: number) => ({
+                _id: task.task_id || task._id || `${index}`, // use task_id to match backend
+                batch: task.batch,
+                course: task.course,
+                task_title: task.task_title,
+                task_description: task.task_description,
+                due_date: task.due_date,
+            }));
+
+            setTasks(normalizedTasks);
         } catch (error: any) {
             console.error(error);
             toast.error("Failed to fetch tasks");
@@ -214,6 +231,54 @@ function Showtask() {
     useEffect(() => {
         fetchTasks();
     }, []);
+
+    const closeDeleteModal = () => {
+        setIsDeleteOpen(false);
+        setTaskToDelete(null);
+    };
+
+    const handleDelete = async () => {
+        if (!taskToDelete?._id) return;
+
+        try {
+            const response = await axios.delete(
+                `https://nystai-backend.onrender.com/Students-Tasks/delete-tasks/${taskToDelete._id}`,
+                { headers: { "Content-Type": "application/json" } }
+            );
+
+            console.log("Delete response:", response.data);
+
+            if (response.data.success) {
+                toast.success("Task deleted successfully");
+                setTasks((prev) => prev.filter((task) => task._id !== taskToDelete._id));
+            } else {
+                toast.error(response.data.message || "Failed to delete task");
+            }
+        } catch (error: any) {
+            console.error("Delete error:", error.response || error);
+            toast.error(error.response?.data?.message || "Failed to delete task");
+        } finally {
+            closeDeleteModal();
+        }
+    };
+
+    const goToTaskDetail = async (taskId?: string) => {
+        if (!taskId) return;
+        try {
+            const response = await axios.get(
+                `https://nystai-backend.onrender.com/Students-Tasks/task/${taskId}/mailsent`
+            );
+            console.log("API response:", response.data);
+        } catch (error) {
+            console.error("Error fetching task mail:", error);
+        }
+    };
+
+    function truncateWords(text: string, wordLimit: number) {
+        const words = text.split(" ");
+        if (words.length <= wordLimit) return text;
+        return words.slice(0, wordLimit).join(" ") + "...";
+    }
 
     return (
         <div className="mt-5">
@@ -229,33 +294,65 @@ function Showtask() {
                         {tasks.map((task) => (
                             <div
                                 key={task._id}
-                                className="group rounded-2xl overflow-hidden border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03] shadow-sm p-6 hover:bg-[#FFDD68ac] transition-colors duration-300"
+                                className="cursor-pointer rounded-2xl overflow-hidden border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03] shadow-sm p-6 hover:bg-[#FFDD68ac] transition-colors duration-300 flex flex-col justify-between h-full"
+                                onClick={() => navigate(`/tasklist/${task._id}`)}
                             >
-                                <div className="mb-2">
+                                <div>
                                     <div className="mb-5 flex items-center justify-between">
                                         <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
-                                            {task.batch}
+                                            Batch {task.batch}
                                         </h3>
-                                        <div className="flex flex-row gap-6">
-                                            <MoreVertical className="w-5 h-5 text-gray-600 dark:text-gray-300" />
-                                        </div>
+                                        <Trash2
+                                            onClick={(e) => {
+                                                e.stopPropagation(); // stops triggering card click
+                                                setTaskToDelete(task);
+                                                setIsDeleteOpen(true);
+                                            }}
+                                            className="w-5 h-5 text-gray-600 dark:text-gray-300"
+                                        />
                                     </div>
 
                                     <p className="text-gray-600 mb-2 font-semibold">
-                                        {task.task_title}
+                                        {truncateWords(task.task_title, 4)}
                                     </p>
                                     <p className="text-gray-400 font-medium">
-                                        {task.task_description}
-                                    </p>
-                                    <p className="text-black font-medium mt-5">
-                                        Deadline: {new Date(task.due_date).toLocaleDateString("en-GB")}
+                                        {truncateWords(task.task_description, 10)}
                                     </p>
                                 </div>
+
+                                <p className="text-black font-medium mt-5">
+                                    Deadline: {new Date(task.due_date).toLocaleDateString("en-GB")}
+                                </p>
                             </div>
                         ))}
                     </div>
                 )}
             </div>
+
+            {/* Render Modal ONCE outside the loop */}
+            {isDeleteOpen && taskToDelete && (
+                <Modal isOpen={isDeleteOpen} onClose={closeDeleteModal} className="max-w-md m-4">
+                    <div className="p-6 rounded-3xl bg-white dark:bg-gray-900">
+                        <h4 className="text-xl font-semibold text-gray-800 dark:text-white/90 mb-8">
+                            Confirm Task Deletion
+                        </h4>
+                        <div className="flex justify-center gap-4">
+                            <button
+                                onClick={handleDelete}
+                                className="flex items-center gap-2 rounded-2xl border border-gray-300 bg-[#F8C723] px-10 py-2 text-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 hover:text-gray-800"
+                            >
+                                Yes, Delete Task
+                            </button>
+                            <button
+                                onClick={closeDeleteModal}
+                                className="px-4 py-2 rounded-2xl border border-[#F8C723] text-gray-800"
+                            >
+                                <X size={18} className="text-[#F8C723]" />
+                            </button>
+                        </div>
+                    </div>
+                </Modal>
+            )}
         </div>
     );
 }

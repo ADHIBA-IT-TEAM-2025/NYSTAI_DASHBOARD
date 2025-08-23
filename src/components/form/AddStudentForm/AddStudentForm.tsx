@@ -137,14 +137,12 @@ export default function StudentAddForm() {
       newErrors.name = "Name must be 4–30 letters only";
     }
 
-    // if (!formData.last_name.trim()) {
-    //   newErrors.last_name = "Last name is required";
-    // } else if (!/^[A-Za-z]{4,30}$/.test(formData.last_name)) {
-    //   newErrors.last_name = "Last name must be 4–30 letters only";
-    // }
-
     if (!formData.last_name) {
-      newErrors.last_name = "last Name is required";
+      newErrors.last_name = "Last name is required";
+    } else if (formData.last_name.length > 4) {
+      newErrors.last_name = "Last name must be at most 4 characters long";
+    } else if (!/^[A-Za-z\s]+$/.test(formData.last_name)) {
+      newErrors.last_name = "Last name must contain only letters";
     }
 
     if (!formData.dob) {
@@ -168,7 +166,9 @@ export default function StudentAddForm() {
       newErrors.email = "Invalid or unsupported email domain";
     }
 
-    if (!/^[6-9]\d{9}$/.test(formData.phone)) {
+    if (!formData.phone) {
+      newErrors.phone = "Phone number is required";
+    } else if (!/^[6-9]\d{9}$/.test(formData.phone)) {
       newErrors.phone = "Invalid phone number";
     }
 
@@ -178,8 +178,7 @@ export default function StudentAddForm() {
       newErrors.alt_phone = "Invalid alternate phone number";
     }
 
-
-    if (!/^\d{12}$/.test(formData.aadhar_number || '')) {
+    if (!/^\d{12}$/.test(formData.aadhar_number || "")) {
       newErrors.aadhar_number = "Aadhar must be 12 digits";
     }
 
@@ -225,25 +224,21 @@ export default function StudentAddForm() {
     if (!formData.batch) newErrors.batch = "Batch is required";
     if (!formData.tutor) newErrors.tutor = "Tutor is required";
 
-
-    // Check if any document is missing
-    if (!documents.passport_photo) {
-      newErrors.passport_photo = "Passport photo is required";
-    }
-    if (!documents.pan_card) {
-      newErrors.pan_card = "PAN card is required";
-    }
-    if (!documents.aadhar_card) {
-      newErrors.aadhar_card = "Aadhar card is required";
-    }
-    if (!documents.sslc_marksheet) {
-      newErrors.sslc_marksheet = "SSLC marksheet is required";
-    }
+    if (!documents.passport_photo) newErrors.passport_photo = "Passport photo is required";
+    if (!documents.pan_card) newErrors.pan_card = "PAN card is required";
+    if (!documents.aadhar_card) newErrors.aadhar_card = "Aadhar card is required";
+    if (!documents.sslc_marksheet) newErrors.sslc_marksheet = "SSLC marksheet is required";
 
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
 
+    // 🔥 Show all errors in toast
+    if (Object.keys(newErrors).length > 0) {
+      Object.values(newErrors).forEach((errMsg) => toast.error(errMsg));
+      return false;
+    }
+
+    return true;
+  };
 
   return (
     <>

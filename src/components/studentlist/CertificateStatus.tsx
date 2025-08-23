@@ -50,7 +50,6 @@ export default function CertificateStatus() {
         certificate_status: "",
     });
 
-    // Fetch student on mount or id change
     useEffect(() => {
         if (id) {
             axios
@@ -64,7 +63,6 @@ export default function CertificateStatus() {
         }
     }, [id]);
 
-    // Sync formData when student loads
     useEffect(() => {
         if (student) {
             setFormData({
@@ -81,7 +79,6 @@ export default function CertificateStatus() {
 
     const handleSave = async () => {
         if (!student) return;
-
 
         const newStatus = formData.certificate_status;
         const oldStatus = student.certificate_status;
@@ -132,7 +129,6 @@ export default function CertificateStatus() {
             certificate_status: value,
         }));
     };
-
 
     const InfoRow = ({ label, value }: { label: string; value?: string | number }) => (
         <div className="flex">

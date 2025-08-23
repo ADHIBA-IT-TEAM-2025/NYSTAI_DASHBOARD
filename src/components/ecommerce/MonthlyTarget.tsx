@@ -1,24 +1,12 @@
+import React from "react";
+import { PieChart } from "@mui/x-charts/PieChart";
 
 export default function MonthlyTarget() {
   return (
     <div className="rounded-2xl border border-gray-200 bg-gray-100 dark:border-gray-800 dark:bg-white/[0.03]">
-      <div className="px-5 pt-5 bg-white shadow-default rounded-2xl pb-3 dark:bg-gray-900 sm:px-6 sm:pt-6">
-        <div className="flex justify-between">
-          <div>
-            <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
-              Traffic by Courses
-            </h3>
-          </div>
-        </div>
-        <div className="relative">
-          <div className="max-h-[250px]" id="chartDarkStyle">
-            {/* <PieActiveArc /> */}
-          </div>
-        </div>
+      <PieChartnystai />
 
-      </div>
-
-      <div className="flex items-center justify-center gap-5 px-6 py-3.5 sm:gap-8 sm:py-5">
+      {/* <div className="flex items-center justify-center gap-5 px-6 py-3.5 sm:gap-8 sm:py-5">
         <div>
           <p className="mb-1 text-center text-gray-500 text-theme-xs dark:text-gray-400 sm:text-sm">
             Target
@@ -91,7 +79,48 @@ export default function MonthlyTarget() {
             </svg>
           </p>
         </div>
+      </div> */}
+    </div>
+  );
+}
+
+function PieChartnystai() {
+  const data = [
+    { id: 0, value: 25, label: "System Integration Program", color: "#FFEB3B" },
+    { id: 1, value: 25, label: "IoT Application & Deployment", color: "#FFBF00" },
+    { id: 2, value: 25, label: "Embedded Systems & Microcontrollers", color: "#F5B700" },
+    { id: 3, value: 25, label: "Networking & Infrastructure Setup", color: "#FFC107" },
+  ];
+
+  return (
+    <div className="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03] px-5 p-5">
+      {/* Header */}
+      <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90 mb-2 ">
+        Traffic by Courses
+      </h3>
+
+      {/* Pie Chart */}
+      <div className="flex justify-center items-center py-3">
+        <PieChart
+          width={300}
+          height={300}
+          series={[
+            {
+              data,
+              innerRadius: 50,
+              outerRadius: 100,
+              paddingAngle: 5,
+              cornerRadius: 5,
+              startAngle: -60,
+              endAngle: 300,
+              cx: 150,
+              cy: 150,
+            },
+          ]}
+        />
       </div>
     </div>
   );
 }
+
+

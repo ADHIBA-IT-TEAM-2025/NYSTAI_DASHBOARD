@@ -24,67 +24,66 @@ import Studentcertification from "./components/studentlist/CertificateStatus";
 import StudentEditForm from "./components/form/editstudentform/editstudentform.tsx";
 import ContactGrid from "./components/ContactGrid/ContactGrid";
 import { Toaster } from "react-hot-toast";
-import TutorList from "./components/trainer/TutorList";
+import ProfileCards from "./components/trainer/TutorList";
 import ListStudent from "./components/ContactGrid/ListStudent";
 import AddNewTutor from "./components/trainer/AddNewTutor";
 import Createtask from "./components/trainer/Createtask";
+import Tasklist from "./components/trainer/tasklist.tsx";
+import Taskstatus from "./components/trainer/taskstatus.tsx";
+import StudentAssignment from "./components/trainer/StudentAssignment.tsx";
 
 export default function App() {
   return (
     <>
-     <Toaster
-  position="bottom-center"
-  reverseOrder={false}
-  toastOptions={{
-    style: {
-      background: "#fff",
-      color: "#000",
-    },
-  }}
-/>
+      <Toaster
+        position="bottom-center"
+        reverseOrder={false}
+        toastOptions={{
+          style: {
+            background: "#fff",
+            color: "#000",
+          },
+        }}
+      />
 
       <Router>
         <ScrollToTop />
         <Routes>
-          {/* Dashboard Layout */}
+          {/* Routes inside AppLayout (with header/nav) */}
           <Route element={<AppLayout />}>
             <Route index path="/" element={<Home />} />
-            {/* Courses Page */}
             <Route path="/Courses" element={<AllCourses />} />
             <Route path="/course/:id" element={<CourseDetail />} />
-            {/* Pricing Page */}
             <Route path="/Pricing" element={<AllPricing />} />
-            {/* Profile  */}
             <Route path="/profile" element={<UserProfiles />} />
             <Route path="/calendar" element={<Calendar />} />
             <Route path="/blank" element={<Blank />} />
-            {/* Forms */}
             <Route path="/AddStudentForm" element={<FormElements />} />
-            {/* {ContactGrid} */}
             <Route path="/ContactGrid" element={<ContactGrid />} />
             <Route path="/ListStudent" element={<ListStudent />} />
-            {/* {TutorList } */}
-            <Route path="/Trainers" element={<TutorList/>} />
-            <Route path="/AddNewTutor" element={<AddNewTutor/>} />
+            <Route path="/Trainers" element={<ProfileCards />} />
+            <Route path="/AddNewTutor" element={<AddNewTutor />} />
             <Route path="/Createtask" element={<Createtask />} />
-            {/* {student list} */}
+            <Route path="/tasklist/:taskId" element={<Tasklist />} />
+            <Route path="/task/:taskId/student/:studentId" element={<Taskstatus />} />
             <Route path="/studentlist" element={<Studentlist />} />
             <Route path="/student/:id" element={<Studentcertification />} />
             <Route path="/Editstudentform/:id" element={<StudentEditForm />} />
-            {/* Ui Elements */}
             <Route path="/alerts" element={<Alerts />} />
             <Route path="/avatars" element={<Avatars />} />
             <Route path="/badge" element={<Badges />} />
             <Route path="/buttons" element={<Buttons />} />
             <Route path="/images" element={<Images />} />
             <Route path="/videos" element={<Videos />} />
-            {/* Charts */}
             <Route path="/line-chart" element={<LineChart />} />
             <Route path="/bar-chart" element={<BarChart />} />
           </Route>
-          {/* Auth Layout */}
+
+          {/* Student Assignment Page (outside AppLayout) */}
+          <Route path="/student-assignment/:token" element={<StudentAssignment />} />
+
+          {/* Auth and fallback */}
           <Route path="/signin" element={<SignIn />} />
-          {/* Fallback Route */}
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Router>
