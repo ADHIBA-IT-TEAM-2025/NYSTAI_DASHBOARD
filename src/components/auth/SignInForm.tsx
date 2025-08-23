@@ -4,6 +4,7 @@ import { ChevronLeftIcon, EyeCloseIcon, EyeIcon } from "../../icons";
 import Label from "../form/Label";
 import Input from "../form/input/InputField";
 import Checkbox from "../form/input/Checkbox";
+import Button from "../ui/button/Button";
 import toast from "react-hot-toast";
 
 export default function SignInForm() {
@@ -114,9 +115,9 @@ export default function SignInForm() {
               </Link>
             </div>
             <div>
-              <button className="w-full" >
+              <Button className="w-full" size="sm" type="submit">
                 Sign in
-              </button>
+              </Button>
             </div>
           </div>
         </form>
