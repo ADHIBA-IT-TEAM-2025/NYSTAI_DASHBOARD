@@ -29,7 +29,6 @@ interface Student {
     passport_photo_url?: string;
 }
 
-
 // Placeholder for student image
 const studentPlaceholder = "/placeholder.png";
 
@@ -53,17 +52,17 @@ export default function Tasklist() {
                     setStudents(res.data.data);
                 }
 
-            } catch (error) {
                 console.log("Students fetched:", res.data.data);
 
+            } catch (error) {
+                console.error("Error fetching students:", error);
             } finally {
                 setLoading(false);
             }
         };
 
         fetchAllTaskSubmissions();
-    }, []); // Removed taskId dependency since it's not needed anymore
-
+    }, [taskId]);
 
     // Fetch task mails
     useEffect(() => {
@@ -169,10 +168,9 @@ export default function Tasklist() {
                                 ) : (
                                     students.map((student) => (
                                         <div
-                                            key={student.student_id || student.id}  // use correct ID
+                                            key={student.student_id} // Only student_id exists
                                             className="cursor-pointer overflow-hidden border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03] shadow-sm p-4 hover:bg-[#FFDD68ac] transition-colors duration-300 flex flex-col justify-between h-fit mb-5"
                                             onClick={() => {
-                                                // Navigate using the proper student_id
                                                 navigate(`/task/${taskId}/student/${student.student_id}`);
                                             }}
                                         >

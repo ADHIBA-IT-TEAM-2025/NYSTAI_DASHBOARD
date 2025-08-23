@@ -8,7 +8,7 @@ import axios from "axios";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faChevronDown } from "@fortawesome/free-solid-svg-icons";
 import toast from "react-hot-toast";
-import { MoreVertical, Trash2, X } from "lucide-react";
+import { Trash2, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Modal } from "../ui/modal/index.tsx";
 
@@ -18,7 +18,7 @@ export default function Createtask() {
         course: "",
         task_title: "",
         task_description: "",
-        due_date: "", // yyyy-mm-dd string
+        due_date: "",
     });
 
     const [errors, setErrors] = useState<any>({});
@@ -40,7 +40,6 @@ export default function Createtask() {
 
         setLoading(true);
         try {
-            // Backend may expect due_date as yyyy-mm-dd string
             const payload = {
                 batch: formData.batch,
                 course: formData.course,
@@ -48,8 +47,6 @@ export default function Createtask() {
                 task_description: formData.task_description,
                 due_date: formData.due_date,
             };
-
-            console.log("Payload:", payload);
 
             const response = await axios.post(
                 "https://nystai-backend.onrender.com/Students-Tasks/assign-task",
@@ -60,7 +57,6 @@ export default function Createtask() {
             toast.success("Task created successfully!");
             console.log(response.data);
 
-            // Reset form
             setFormData({
                 batch: "",
                 course: "",
@@ -70,12 +66,10 @@ export default function Createtask() {
             });
             setErrors({});
 
-            // Refresh the page to show updated tasks
             window.location.reload();
         } catch (error: any) {
             console.error(error);
-            const msg = error.response?.data?.message || "Failed to create task";
-            toast.error(msg);
+            toast.error(error.response?.data?.message || "Failed to create task");
         } finally {
             setLoading(false);
         }
@@ -176,14 +170,12 @@ export default function Createtask() {
                 </div>
 
                 <Showtask />
-
             </div>
-
-
         </>
     );
 }
 
+// ---------------- Showtask Component ----------------
 interface Task {
     _id: string;
     batch: string;
@@ -208,10 +200,8 @@ function Showtask() {
                 { headers: { "Content-Type": "application/json" } }
             );
 
-            console.log("Tasks from API:", response.data.tasks);
-
             const normalizedTasks = (response.data.tasks || []).map((task: any, index: number) => ({
-                _id: task.task_id || task._id || `${index}`, // use task_id to match backend
+                _id: task.task_id || task._id || `${index}`,
                 batch: task.batch,
                 course: task.course,
                 task_title: task.task_title,
@@ -246,8 +236,6 @@ function Showtask() {
                 { headers: { "Content-Type": "application/json" } }
             );
 
-            console.log("Delete response:", response.data);
-
             if (response.data.success) {
                 toast.success("Task deleted successfully");
                 setTasks((prev) => prev.filter((task) => task._id !== taskToDelete._id));
@@ -259,18 +247,6 @@ function Showtask() {
             toast.error(error.response?.data?.message || "Failed to delete task");
         } finally {
             closeDeleteModal();
-        }
-    };
-
-    const goToTaskDetail = async (taskId?: string) => {
-        if (!taskId) return;
-        try {
-            const response = await axios.get(
-                `https://nystai-backend.onrender.com/Students-Tasks/task/${taskId}/mailsent`
-            );
-            console.log("API response:", response.data);
-        } catch (error) {
-            console.error("Error fetching task mail:", error);
         }
     };
 
@@ -294,21 +270,21 @@ function Showtask() {
                         {tasks.map((task) => (
                             <div
                                 key={task._id}
-                                className="cursor-pointer rounded-2xl overflow-hidden border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03] shadow-sm p-6 hover:bg-[#FFDD68ac] transition-colors duration-300 flex flex-col justify-between h-full"
+                                className="cursor-pointer rounded-2xl overflow-hidden border border-gray-200 bg-white shadow-sm p-6 hover:bg-[#FFDD68ac] transition-colors duration-300 flex flex-col justify-between h-full"
                                 onClick={() => navigate(`/tasklist/${task._id}`)}
                             >
                                 <div>
                                     <div className="mb-5 flex items-center justify-between">
-                                        <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
+                                        <h3 className="text-lg font-semibold text-gray-800">
                                             Batch {task.batch}
                                         </h3>
                                         <Trash2
                                             onClick={(e) => {
-                                                e.stopPropagation(); // stops triggering card click
+                                                e.stopPropagation();
                                                 setTaskToDelete(task);
                                                 setIsDeleteOpen(true);
                                             }}
-                                            className="w-5 h-5 text-gray-600 dark:text-gray-300"
+                                            className="w-5 h-5 text-gray-600"
                                         />
                                     </div>
 
@@ -329,17 +305,16 @@ function Showtask() {
                 )}
             </div>
 
-            {/* Render Modal ONCE outside the loop */}
             {isDeleteOpen && taskToDelete && (
                 <Modal isOpen={isDeleteOpen} onClose={closeDeleteModal} className="max-w-md m-4">
-                    <div className="p-6 rounded-3xl bg-white dark:bg-gray-900">
-                        <h4 className="text-xl font-semibold text-gray-800 dark:text-white/90 mb-8">
+                    <div className="p-6 rounded-3xl bg-white">
+                        <h4 className="text-xl font-semibold text-gray-800 mb-8">
                             Confirm Task Deletion
                         </h4>
                         <div className="flex justify-center gap-4">
                             <button
                                 onClick={handleDelete}
-                                className="flex items-center gap-2 rounded-2xl border border-gray-300 bg-[#F8C723] px-10 py-2 text-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 hover:text-gray-800"
+                                className="flex items-center gap-2 rounded-2xl border border-gray-300 bg-[#F8C723] px-10 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-gray-800"
                             >
                                 Yes, Delete Task
                             </button>
@@ -357,6 +332,7 @@ function Showtask() {
     );
 }
 
+// ---------------- CustomDropdown Component ----------------
 type CustomDropdownProps<T extends string> = {
     label?: string;
     options: T[];

@@ -14,8 +14,6 @@ import { Modal } from "../ui/modal";
 import { X } from "lucide-react";
 import toast from "react-hot-toast";
 import { PlusCircleIcon } from "lucide-react";
-import PageBreadcrumb from "../../components/common/PageBreadCrumb";
-import PageMeta from "../../components/common/PageMeta";
 import { Dropdown } from "../../components/ui/dropdown/Dropdown";
 import { DropdownItem } from "../../components/ui/dropdown/DropdownItem";
 
