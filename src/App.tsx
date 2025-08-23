@@ -80,7 +80,8 @@ export default function App() {
           </Route>
 
           {/* Student Assignment Page (outside AppLayout) */}
-          <Route path="/student-assignment/:token" element={<StudentAssignment />} />
+          <Route path="/Students-Tasks/assignment/:token" element={<StudentAssignment />} />
+
 
           {/* Auth and fallback */}
           <Route path="/signin" element={<SignIn />} />
