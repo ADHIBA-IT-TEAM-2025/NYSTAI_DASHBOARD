@@ -40,7 +40,7 @@ export default function ContactGrid() {
             <PageBreadcrumb pageTitle="Contact Grid" />
 
             <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] lg:p-6">
-                <div className="mb-5 flex items-center justify-between">
+                <div className="mb-5 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 lg:mb-7">
                     <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">Contact</h3>
                     <div className="flex flex-row gap-6">
                         <Link to="/ContactGrid"

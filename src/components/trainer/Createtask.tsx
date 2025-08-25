@@ -12,6 +12,7 @@ import { Trash2, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Modal } from "../ui/modal/index.tsx";
 
+// ---------------- Create Task Page ----------------
 export default function Createtask() {
     const [formData, setFormData] = useState({
         batch: "",
@@ -23,6 +24,26 @@ export default function Createtask() {
 
     const [errors, setErrors] = useState<any>({});
     const [loading, setLoading] = useState(false);
+
+    const [courses, setCourses] = useState<{ id: number; course_name: string }[]>([]);
+
+    useEffect(() => {
+        const fetchCourses = async () => {
+            try {
+                const response = await fetch("https://nystai-backend.onrender.com/Allcourses/get-all-courses");
+                const result = await response.json();
+                if (result.success) {
+                    setCourses(result.data); // set courses into state
+                } else {
+                    console.error("Failed to fetch courses");
+                }
+            } catch (err) {
+                console.error("Error fetching courses:", err);
+            }
+        };
+
+        fetchCourses();
+    }, []);
 
     const validateForm = () => {
         let newErrors: any = {};
@@ -40,13 +61,7 @@ export default function Createtask() {
 
         setLoading(true);
         try {
-            const payload = {
-                batch: formData.batch,
-                course: formData.course,
-                task_title: formData.task_title,
-                task_description: formData.task_description,
-                due_date: formData.due_date,
-            };
+            const payload = { ...formData };
 
             const response = await axios.post(
                 "https://nystai-backend.onrender.com/Students-Tasks/assign-task",
@@ -65,7 +80,6 @@ export default function Createtask() {
                 due_date: "",
             });
             setErrors({});
-
             window.location.reload();
         } catch (error: any) {
             console.error(error);
@@ -118,11 +132,13 @@ export default function Createtask() {
                             <div>
                                 <Label>Course</Label>
                                 <CustomDropdown
-                                    options={["Course 1", "Course 2", "Course 3"]}
+                                    options={courses.map(course => course.course_name)}
                                     value={formData.course}
-                                    onSelect={(val) => setFormData({ ...formData, course: val })}
+                                    onSelect={(value) => setFormData({ ...formData, course: value })}
                                 />
-                                {errors.course && <p className="text-red-500">{errors.course}</p>}
+                                {errors.course && (
+                                    <p className="text-red-500 text-sm mt-1">{errors.course}</p>
+                                )}
                             </div>
 
                             <div>
@@ -134,9 +150,13 @@ export default function Createtask() {
                                     onChange={(date) => {
                                         const selectedDate = Array.isArray(date) ? date[0] : date;
                                         if (selectedDate) {
+                                            const year = selectedDate.getFullYear();
+                                            const month = String(selectedDate.getMonth() + 1).padStart(2, "0");
+                                            const day = String(selectedDate.getDate()).padStart(2, "0");
+
                                             setFormData({
                                                 ...formData,
-                                                due_date: selectedDate.toISOString().split("T")[0],
+                                                due_date: `${year}-${month}-${day}`,
                                             });
                                         }
                                     }}
@@ -229,7 +249,6 @@ function Showtask() {
 
     const handleDelete = async () => {
         if (!taskToDelete?._id) return;
-
         try {
             const response = await axios.delete(
                 `https://nystai-backend.onrender.com/Students-Tasks/delete-tasks/${taskToDelete._id}`,
@@ -340,7 +359,12 @@ type CustomDropdownProps<T extends string> = {
     onSelect?: (value: T) => void;
 };
 
-function CustomDropdown<T extends string>({ label = "Pick an option", options = [], value, onSelect }: CustomDropdownProps<T>) {
+function CustomDropdown<T extends string>({
+    label = "Pick an option",
+    options = [],
+    value,
+    onSelect,
+}: CustomDropdownProps<T>) {
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -352,9 +376,9 @@ function CustomDropdown<T extends string>({ label = "Pick an option", options = 
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
-    const handleSelect = (value: T) => {
+    const handleSelect = (val: T) => {
         setIsOpen(false);
-        onSelect?.(value);
+        onSelect?.(val);
     };
 
     return (
@@ -365,7 +389,10 @@ function CustomDropdown<T extends string>({ label = "Pick an option", options = 
             >
                 {value || label}
             </button>
-            <span className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}>
+            <span
+                className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 transition-transform duration-200 ${isOpen ? "rotate-180" : ""
+                    }`}
+            >
                 <FontAwesomeIcon icon={faChevronDown} />
             </span>
             {isOpen && (

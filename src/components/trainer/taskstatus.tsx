@@ -11,7 +11,9 @@ export default function Taskstatus() {
     const { taskId, studentId } = useParams();
     const [studentData, setStudentData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
-    const [remark, setRemark] = useState(""); // ✅ store textarea value
+    const [remark, setRemark] = useState("");
+    const [sending, setSending] = useState(false);
+    const [completed, setCompleted] = useState(false);
 
     const InfoRow = ({ label, value }: { label: string; value?: string | number }) => (
         <div className="flex mb-5">
@@ -52,35 +54,45 @@ export default function Taskstatus() {
             toast.error("Please enter a remark before sending");
             return;
         }
+        setSending(true);
         try {
-            const res = await axios.post(
+            const res = await axios.put(   // <-- changed to PUT
                 `https://nystai-backend.onrender.com/Students-Tasks/tasks/${taskId}/${studentId}/remark`,
                 { remark }
             );
             if (res.data.success) {
                 toast.success("Remark sent successfully!");
                 setRemark(""); // clear after send
+            } else {
+                toast.error(res.data.message || "Failed to send remark");
             }
         } catch (error) {
             console.error(error);
             toast.error("Failed to send remark");
+        } finally {
+            setSending(false);
         }
     };
 
-    // ✅ Mark completed API with optional notes
+
+    // ✅ Mark completed API
     const handleMarkCompleted = async () => {
+        setSending(true);
         try {
             const res = await axios.post(
                 `https://nystai-backend.onrender.com/Students-Tasks/task/${taskId}/student/${studentId}/completed`,
-                { notes: remark } // send notes if any
+                { notes: remark }
             );
             if (res.data.success) {
                 toast.success("Task marked as completed!");
                 setRemark("");
+                setCompleted(true); // ✅ hide textarea + buttons
             }
         } catch (error) {
             console.error(error);
             toast.error("Failed to mark task as completed");
+        } finally {
+            setSending(false);
         }
     };
 
@@ -151,12 +163,29 @@ export default function Taskstatus() {
                                                             <Eye className="w-4 h-4" /> View
                                                         </a>
                                                         <a
+                                                            onClick={async (e) => {
+                                                                e.preventDefault();
+                                                                try {
+                                                                    const response = await fetch(studentData.file_url);
+                                                                    const blob = await response.blob();
+                                                                    const url = window.URL.createObjectURL(blob);
+                                                                    const a = document.createElement("a");
+                                                                    a.href = url;
+                                                                    a.download = studentData.file_url.split("/").pop(); // file name
+                                                                    document.body.appendChild(a);
+                                                                    a.click();
+                                                                    a.remove();
+                                                                    window.URL.revokeObjectURL(url);
+                                                                } catch (error) {
+                                                                    console.error("Download failed", error);
+                                                                }
+                                                            }}
                                                             href={studentData.file_url}
-                                                            download
                                                             className="rounded-2xl flex items-center gap-2 border border-gray-300 bg-[#F8C723] px-10 py-2 text-sm font-medium text-gray-700"
                                                         >
                                                             <Download className="w-4 h-4" /> Download
                                                         </a>
+
                                                     </div>
                                                 </div>
                                             </div>
@@ -168,37 +197,41 @@ export default function Taskstatus() {
                     </div>
 
                     {/* Remarks & Buttons */}
-                    <div className="space-y-6">
-                        <div className="flex items-center justify-center">
-                            <h1 className="font-semibold text-xl mb-2 text-gray-800 dark:text-white/90">
-                                Remarks
-                            </h1>
-                        </div>
+                    {!completed && (
+                        <div className="space-y-6">
+                            <div className="flex items-center justify-center">
+                                <h1 className="font-semibold text-xl mb-2 text-gray-800 dark:text-white/90">
+                                    Remarks
+                                </h1>
+                            </div>
 
-                        <div className="flex justify-center">
-                            <textarea
-                                value={remark}
-                                onChange={(e) => setRemark(e.target.value)}
-                                placeholder="Enter your notes or remark here..."
-                                className="bg-[#83838329] w-full max-w-6xl h-42 p-4 border rounded-xl focus:outline-none focus:ring-2 focus:ring-yellow-400 dark:bg-gray-900 dark:border-gray-700 dark:text-white/90"
-                            />
-                        </div>
+                            <div className="flex justify-center">
+                                <textarea
+                                    value={remark}
+                                    onChange={(e) => setRemark(e.target.value)}
+                                    placeholder="Enter your notes or remark here..."
+                                    className="bg-[#83838329] w-full max-w-6xl h-42 p-4 border rounded-xl focus:outline-none focus:ring-2 focus:ring-yellow-400 dark:bg-gray-900 dark:border-gray-700 dark:text-white/90"
+                                />
+                            </div>
 
-                        <div className="flex justify-center gap-4">
-                            <button
-                                onClick={handleSendRemark}
-                                className="flex items-center gap-2 border border-gray-300 bg-[#F8C723] px-10 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-                            >
-                                Send Notes
-                            </button>
-                            <button
-                                onClick={handleMarkCompleted}
-                                className="flex items-center gap-2 border border-gray-300 bg-[#F8C723] px-10 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-                            >
-                                Completed
-                            </button>
+                            <div className="flex justify-center gap-4">
+                                <button
+                                    onClick={handleSendRemark}
+                                    disabled={sending}
+                                    className="flex items-center gap-2 border border-gray-300 bg-[#F8C723] px-10 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                                >
+                                    {sending ? "Sending..." : "Send Notes"}
+                                </button>
+                                <button
+                                    onClick={handleMarkCompleted}
+                                    disabled={sending}
+                                    className="flex items-center gap-2 border border-gray-300 bg-[#F8C723] px-10 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                                >
+                                    {sending ? "Processing..." : "Completed"}
+                                </button>
+                            </div>
                         </div>
-                    </div>
+                    )}
                 </div>
             </div>
         </>

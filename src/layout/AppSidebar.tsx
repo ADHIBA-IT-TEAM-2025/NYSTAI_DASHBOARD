@@ -282,7 +282,7 @@ const AppSidebar: React.FC = () => {
                 </h2>
                 {renderMenuItems(navItems, "main")}
               </div>
-              <div>
+              {/* <div>
                 <h2
                   className={`mb-4 text-xs uppercase flex leading-[20px] text-gray-400 ${!isExpanded && !isHovered ? "lg:justify-center" : "justify-start"
                     }`}
@@ -294,7 +294,7 @@ const AppSidebar: React.FC = () => {
                   )}
                 </h2>
                 {renderMenuItems(othersItems, "Favourite")}
-              </div>
+              </div> */}
             </div>
           </nav>
         </div>

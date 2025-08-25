@@ -214,7 +214,8 @@ export default function AllPricing() {
             setPricingPlans(formattedPlans);
         } catch (error) {
             console.error("Error fetching plans:", error);
-            toast.error("Failed to fetch pricing plans.");
+            // ❌ remove this: toast.error("Failed to fetch pricing plans.");
+            // just let the UI show "No pricing plans found."
         } finally {
             setLoading(false);
         }
@@ -331,14 +332,14 @@ export default function AllPricing() {
             <PageBreadcrumb pageTitle="All Pricing" />
 
             <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] lg:p-6">
-                <div className="flex items-center justify-between">
+                <div className="mb-5 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 lg:mb-7">
                     <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">All Pricing</h3>
                     <button
                         onClick={() => {
                             resetForm();
                             setIsAddOpen(true);
                         }}
-                        className="flex items-center gap-2 rounded-2xl border border-gray-300 bg-[#F8C723] px-4 py-2 text-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 hover:text-gray-800"
+                        className="flex items-center gap-2 w-fit rounded-2xl border border-gray-300 bg-[#F8C723] px-4 py-2 text-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 hover:text-gray-800"
                     >
                         <PlusIcon className="size-5 text-gray-800" />
                         Add Plans

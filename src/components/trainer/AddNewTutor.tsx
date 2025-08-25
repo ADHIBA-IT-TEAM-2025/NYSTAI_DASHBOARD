@@ -38,6 +38,8 @@ export default function AddNewTutor() {
         joining_date: "",
     });
 
+    
+
     const [documents, setDocuments] = useState<{ tutor_image: File | null }>({
         tutor_image: null,
     });

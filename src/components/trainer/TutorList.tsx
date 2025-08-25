@@ -20,30 +20,37 @@ interface Tutor {
   last_name?: string;
   name: string;
   dob: string;
-  role?: string;
+  role?: string; // alias for expertise in UI card
   gender: string;
   email: string;
-  contact: string;
+  contact: string; // phone shown in cards
   expertise: string;
   experience_years: string;
   joining_date: string;
   img?: string;
 }
 
+type FormState = {
+  first_name: string;
+  last_name: string;
+  dob: string;
+  gender: string;
+  email: string;
+  phone: string;
+  expertise: string;
+  experience_years: string;
+  joining_date: string;
+};
+
 export default function TutorList() {
   return (
     <>
-      <PageMeta
-        title="All Courses - Nystai Institute"
-        description="All available courses"
-      />
+      <PageMeta title="All Courses - Nystai Institute" description="All available courses" />
       <PageBreadcrumb pageTitle="Tutor List" />
 
       <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] lg:p-6">
-        <div className="mb-5 flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
-            Tutor List
-          </h3>
+        <div className="mb-5 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 lg:mb-7">
+          <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">Tutor List</h3>
           <div className="flex flex-row gap-6">
             <Link
               to="/Createtask"
@@ -75,11 +82,14 @@ export default function TutorList() {
 function ProfileCards() {
   const [team, setTeam] = useState<Tutor[]>([]);
   const [loading, setLoading] = useState(true);
+
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+
   const [selectedTutor, setSelectedTutor] = useState<Tutor | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
-  const [formData, setFormData] = useState({
+
+  const [formData, setFormData] = useState<FormState>({
     first_name: "",
     last_name: "",
     dob: "",
@@ -90,22 +100,22 @@ function ProfileCards() {
     experience_years: "",
     joining_date: "",
   });
+
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isImageRemoved, setIsImageRemoved] = useState(false);
 
+  // ---- Fetch tutors ----
   useEffect(() => {
     const fetchTeamData = async () => {
       try {
-        const res = await axios.get(
-          "https://nystai-backend.onrender.com/NystaiTutors/getalltutors"
-        );
+        const res = await axios.get("https://nystai-backend.onrender.com/NystaiTutors/getalltutors");
 
         if (Array.isArray(res.data.tutors)) {
           const formattedTutors: Tutor[] = res.data.tutors.map((t: any) => ({
             tutor_id: t.tutor_id,
             first_name: t.first_name ?? "",
             last_name: t.last_name ?? "",
-            name: `${t.first_name ?? ""} ${t.last_name ?? ""}`,
+            name: `${t.first_name ?? ""} ${t.last_name ?? ""}`.trim(),
             role: t.expertise ?? "",
             email: t.email ?? "",
             contact: t.phone ?? "",
@@ -114,7 +124,7 @@ function ProfileCards() {
             dob: t.dob ?? "",
             gender: t.gender ?? "",
             joining_date: t.joining_date ?? "",
-            experience_years: t.experience_years ?? ""
+            experience_years: t.experience_years ?? "",
           }));
           setTeam(formattedTutors);
         } else if (res.data.tutor) {
@@ -123,7 +133,7 @@ function ProfileCards() {
               tutor_id: res.data.tutor.tutor_id,
               first_name: res.data.tutor.first_name ?? "",
               last_name: res.data.tutor.last_name ?? "",
-              name: `${res.data.tutor.first_name ?? ""} ${res.data.tutor.last_name ?? ""}`,
+              name: `${res.data.tutor.first_name ?? ""} ${res.data.tutor.last_name ?? ""}`.trim(),
               role: res.data.tutor.expertise ?? "",
               email: res.data.tutor.email ?? "",
               contact: res.data.tutor.phone ?? "",
@@ -136,9 +146,9 @@ function ProfileCards() {
             },
           ]);
         }
-
       } catch (error) {
         console.error("Error fetching team data:", error);
+        toast.error("Failed to load tutors");
       } finally {
         setLoading(false);
       }
@@ -147,6 +157,7 @@ function ProfileCards() {
     fetchTeamData();
   }, []);
 
+  // ---- Delete ----
   const openDeleteModal = (tutor: Tutor) => {
     setSelectedTutor(tutor);
     setIsDeleteOpen(true);
@@ -159,7 +170,7 @@ function ProfileCards() {
         `https://nystai-backend.onrender.com/NystaiTutors/deletetutor/${selectedTutor.tutor_id}`
       );
       toast.success(res.data.message || "Tutor deleted successfully");
-      setTeam(prev => prev.filter(t => t.tutor_id !== selectedTutor.tutor_id));
+      setTeam((prev) => prev.filter((t) => t.tutor_id !== selectedTutor.tutor_id));
       setIsDeleteOpen(false);
       setSelectedTutor(null);
     } catch (error: any) {
@@ -168,9 +179,10 @@ function ProfileCards() {
     }
   };
 
+  // ---- Edit ----
   const openEditModal = (tutor: Tutor) => {
     setSelectedTutor(tutor);
-
+    // Initialize form from selected tutor so dropdowns show the existing value
     setFormData({
       first_name: tutor.first_name || "",
       last_name: tutor.last_name || "",
@@ -182,11 +194,19 @@ function ProfileCards() {
       experience_years: tutor.experience_years || "",
       joining_date: tutor.joining_date || "",
     });
-
     setSelectedFile(null);
+    setIsImageRemoved(false);
     setIsEditOpen(true);
   };
 
+  const toYMD = (date: Date) => {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, "0");
+    const d = String(date.getDate()).padStart(2, "0");
+    return `${y}-${m}-${d}`;
+  };
+
+  // ---- Update ----
   const handleUpdateTutor = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedTutor) return;
@@ -197,39 +217,55 @@ function ProfileCards() {
     const updateUrl = `https://nystai-backend.onrender.com/NystaiTutors/updatetutor/${tutorId}`;
 
     try {
-      let payload: any;
-      let headers: any;
+      // Always use FormData to satisfy backend expectations for optional image
+      const payload = new FormData();
+      Object.entries(formData).forEach(([key, value]) => {
+        if (value !== null && value !== undefined) payload.append(key, String(value));
+      });
 
-      if (selectedFile || isImageRemoved) {
-        payload = new FormData();
-        Object.entries(formData).forEach(([key, value]) => {
-          payload.append(key, String(value));
-        });
-        if (selectedFile) payload.append("tutor_image", selectedFile);
-        if (isImageRemoved) payload.append("remove_image", "true");
-        headers = { "Content-Type": "multipart/form-data" };
-      } else {
-        payload = { ...formData };
-        headers = { "Content-Type": "application/json" };
-      }
+      if (selectedFile) payload.append("tutor_image", selectedFile);
+      if (isImageRemoved) payload.append("remove_image", "true");
 
-      const res = await axios.put(updateUrl, payload, { headers });
+      const res = await axios.put(updateUrl, payload, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
 
-      toast.success(res.data.message || "Tutor updated successfully");
+      toast.success(res?.data?.message || "Tutor updated successfully");
 
-      // Update team state
+      // Update local UI state
       setTeam((prev) =>
         prev.map((t) =>
           t.tutor_id === tutorId
-            ? { ...t, ...formData, img: selectedFile ? URL.createObjectURL(selectedFile) : isImageRemoved ? "" : t.img }
+            ? {
+              ...t,
+              first_name: formData.first_name,
+              last_name: formData.last_name,
+              name: `${formData.first_name} ${formData.last_name}`.trim(),
+              email: formData.email,
+              contact: formData.phone,
+              expertise: formData.expertise,
+              role: formData.expertise,
+              dob: formData.dob,
+              gender: formData.gender,
+              joining_date: formData.joining_date,
+              experience_years: formData.experience_years,
+              img: selectedFile
+                ? URL.createObjectURL(selectedFile) // instant UI feedback
+                : isImageRemoved
+                  ? ""
+                  : t.img,
+            }
             : t
         )
       );
 
+      // Close modal and clean up
       setIsEditOpen(false);
-      setSelectedTutor(null);
-      setSelectedFile(null);
-      setIsImageRemoved(false);
+      setTimeout(() => {
+        setSelectedTutor(null);
+        setSelectedFile(null);
+        setIsImageRemoved(false);
+      }, 150);
     } catch (error: any) {
       console.error("Update Tutor Error:", error);
       toast.error(error?.response?.data?.message || "Failed to update tutor");
@@ -243,23 +279,32 @@ function ProfileCards() {
   return (
     <>
       {team.map((person, i) => (
-        <div key={i} className="relative w-72 h-72 group overflow-hidden rounded-lg shadow-lg bg-white border border-gray-300">
+        <div
+          key={person.tutor_id ?? i}
+          className="relative w-72 h-72 group overflow-hidden rounded-lg shadow-lg bg-white border border-gray-300"
+        >
           {/* Card Info */}
           <div className="absolute top-25 left-0 w-full p-4 bg-white text-black opacity-0 group-hover:opacity-100 transition-opacity duration-500 z-0">
             <div className="flex mb-3">
               <span className="flex-[0_0_20%] font-medium text-gray-500 dark:text-gray-400">Coaching</span>
               <span className="flex-[0_0_10%] font-medium text-gray-500 dark:text-gray-400 text-center">:</span>
-              <span className="flex-[0_0_70%] break-words whitespace-normal text-gray-800 dark:text-white/90">{person.expertise}</span>
+              <span className="flex-[0_0_70%] break-words whitespace-normal text-gray-800 dark:text-white/90">
+                {person.expertise}
+              </span>
             </div>
             <div className="flex mb-3">
               <span className="flex-[0_0_20%] font-medium text-gray-500 dark:text-gray-400">Contact</span>
               <span className="flex-[0_0_10%] font-medium text-gray-500 dark:text-gray-400 text-center">:</span>
-              <span className="flex-[0_0_70%] break-words whitespace-normal text-gray-800 dark:text-white/90">{person.contact}</span>
+              <span className="flex-[0_0_70%] break-words whitespace-normal text-gray-800 dark:text-white/90">
+                {person.contact}
+              </span>
             </div>
             <div className="flex mb-3">
               <span className="flex-[0_0_20%] font-medium text-gray-500 dark:text-gray-400">Mail Id</span>
               <span className="flex-[0_0_10%] font-medium text-gray-500 dark:text-gray-400 text-center">:</span>
-              <span className="flex-[0_0_70%] break-words whitespace-normal text-gray-800 dark:text-white/90">{person.email}</span>
+              <span className="flex-[0_0_70%] break-words whitespace-normal text-gray-800 dark:text-white/90">
+                {person.email}
+              </span>
             </div>
           </div>
 
@@ -275,10 +320,16 @@ function ProfileCards() {
               <p className="text-sm text-white leading-relaxed line-clamp-3">{person.role}</p>
             </div>
             <div className="flex gap-2">
-              <button className="bg-transparent p-1 rounded-full hover:bg-white hover:bg-opacity-20 transition" onClick={() => openEditModal(person)}>
+              <button
+                className="bg-transparent p-1 rounded-full hover:bg-white hover:bg-opacity-20 transition"
+                onClick={() => openEditModal(person)}
+              >
                 <Edit className="text-white" size={18} />
               </button>
-              <button className="bg-transparent p-1 rounded-full hover:bg-white hover:bg-opacity-20 transition" onClick={() => openDeleteModal(person)}>
+              <button
+                className="bg-transparent p-1 rounded-full hover:bg-white hover:bg-opacity-20 transition"
+                onClick={() => openDeleteModal(person)}
+              >
                 <Trash2 className="text-white" size={18} />
               </button>
             </div>
@@ -294,12 +345,11 @@ function ProfileCards() {
         </div>
       ))}
 
+      {/* Edit Modal */}
       {isEditOpen && selectedTutor && (
         <Modal isOpen={isEditOpen} onClose={() => setIsEditOpen(false)} className="max-w-[900px] m-4">
           <div className="w-full max-w-[900px] overflow-y-auto rounded-3xl bg-white p-4 dark:bg-gray-900 lg:p-11">
-            <h4 className="mb-4 text-2xl font-semibold text-gray-800 dark:text-white/90 text-center">
-              Edit Tutor
-            </h4>
+            <h4 className="mb-4 text-2xl font-semibold text-gray-800 dark:text-white/90 text-center">Edit Tutor</h4>
 
             <form className="flex flex-col mt-5" onSubmit={handleUpdateTutor}>
               <div className="grid grid-cols-1 gap-6 xl:grid-cols-4">
@@ -309,7 +359,10 @@ function ProfileCards() {
                     type="text"
                     value={formData.first_name}
                     onChange={(e) =>
-                      setFormData(prev => ({ ...prev, first_name: e.target.value.replace(/[^A-Za-z]/g, "") }))
+                      setFormData((prev) => ({
+                        ...prev,
+                        first_name: e.target.value.replace(/[^A-Za-z]/g, ""),
+                      }))
                     }
                   />
                 </div>
@@ -320,7 +373,10 @@ function ProfileCards() {
                     type="text"
                     value={formData.last_name}
                     onChange={(e) =>
-                      setFormData(prev => ({ ...prev, last_name: e.target.value.replace(/[^A-Za-z]/g, "") }))
+                      setFormData((prev) => ({
+                        ...prev,
+                        last_name: e.target.value.replace(/[^A-Za-z]/g, ""),
+                      }))
                     }
                   />
                 </div>
@@ -331,30 +387,10 @@ function ProfileCards() {
                     id="dob"
                     placeholder="Select a date"
                     maxDate={new Date(new Date().setFullYear(new Date().getFullYear() - 21))}
-                    value={
-                      formData.dob && !isNaN(Date.parse(formData.dob))
-                        ? new Date(formData.dob)
-                        : undefined
-                    }
+                    value={formData.dob && !isNaN(Date.parse(formData.dob)) ? new Date(formData.dob) : undefined}
                     onChange={(date) => {
-                      const selectedDate = Array.isArray(date) ? date[0] : date;
-
-                      if (selectedDate) {
-                        // Format date to YYYY-MM-DD
-                        const year = selectedDate.getFullYear();
-                        const month = String(selectedDate.getMonth() + 1).padStart(2, "0");
-                        const day = String(selectedDate.getDate()).padStart(2, "0");
-
-                        setFormData((prev) => ({
-                          ...prev,
-                          dob: `${year}-${month}-${day}`,
-                        }));
-                      } else {
-                        setFormData((prev) => ({
-                          ...prev,
-                          dob: "",
-                        }));
-                      }
+                      const d = Array.isArray(date) ? date[0] : date;
+                      setFormData((prev) => ({ ...prev, dob: d ? toYMD(d) : "" }));
                     }}
                   />
                 </div>
@@ -364,9 +400,7 @@ function ProfileCards() {
                   <CustomDropdown
                     options={["Male", "Female", "Other"]}
                     value={formData.gender}
-                    onSelect={(value) =>
-                      setFormData((prev) => ({ ...prev, gender: value }))
-                    }
+                    onSelect={(value) => setFormData((prev) => ({ ...prev, gender: value }))}
                   />
                 </div>
               </div>
@@ -377,7 +411,7 @@ function ProfileCards() {
                   <Input
                     type="email"
                     value={formData.email}
-                    onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, email: e.target.value }))}
                   />
                 </div>
 
@@ -386,45 +420,25 @@ function ProfileCards() {
                   <Input
                     type="tel"
                     value={formData.phone}
-                    onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, phone: e.target.value }))}
                   />
                 </div>
 
                 <div>
                   <Label>Joining Date</Label>
-                  <div>
-                    <DatePicker
-                      id="join-date"
-                      placeholder="Select a date"
-                      minDate={undefined} // or just remove this prop
-
-                      value={
-                        formData.joining_date && !isNaN(Date.parse(formData.joining_date))
-                          ? new Date(formData.joining_date)
-                          : undefined
-                      }
-                      onChange={(date) => {
-                        const selectedDate = Array.isArray(date) ? date[0] : date;
-
-                        if (selectedDate) {
-                          // Format date to YYYY-MM-DD
-                          const year = selectedDate.getFullYear();
-                          const month = String(selectedDate.getMonth() + 1).padStart(2, "0");
-                          const day = String(selectedDate.getDate()).padStart(2, "0");
-
-                          setFormData((prev) => ({
-                            ...prev,
-                            joining_date: `${year}-${month}-${day}`,
-                          }));
-                        } else {
-                          setFormData((prev) => ({
-                            ...prev,
-                            joining_date: "",
-                          }));
-                        }
-                      }}
-                    />
-                  </div>
+                  <DatePicker
+                    id="join-date"
+                    placeholder="Select a date"
+                    value={
+                      formData.joining_date && !isNaN(Date.parse(formData.joining_date))
+                        ? new Date(formData.joining_date)
+                        : undefined
+                    }
+                    onChange={(date) => {
+                      const d = Array.isArray(date) ? date[0] : date;
+                      setFormData((prev) => ({ ...prev, joining_date: d ? toYMD(d) : "" }));
+                    }}
+                  />
                 </div>
 
                 <div>
@@ -432,22 +446,20 @@ function ProfileCards() {
                   <Input
                     type="text"
                     value={formData.experience_years}
-                    onChange={(e) => setFormData(prev => ({ ...prev, experience_years: e.target.value }))}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, experience_years: e.target.value }))}
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 gap-6 xl:grid-cols-2 mt-5 mb-5">
-
                 <div>
                   <Label>Expertise / Courses</Label>
                   <CustomDropdown
                     options={["CCTV", "Home Automation", "Networking", "Other"]}
                     value={formData.expertise}
-                    onSelect={(value) => setFormData(prev => ({ ...prev, expertise: value }))}
+                    onSelect={(value) => setFormData((prev) => ({ ...prev, expertise: value }))}
                   />
                 </div>
-
               </div>
 
               <div>
@@ -482,15 +494,24 @@ function ProfileCards() {
         </Modal>
       )}
 
+      {/* Delete Modal */}
       {isDeleteOpen && selectedTutor && (
         <Modal isOpen={isDeleteOpen} onClose={() => setIsDeleteOpen(false)} className="max-w-md m-4">
           <div className="p-6 rounded-3xl bg-white dark:bg-gray-900">
-            <h4 className="text-xl font-semibold text-gray-800 dark:text-white/90 mb-8">Confirm Tutor Deletion</h4>
+            <h4 className="text-xl font-semibold text-gray-800 dark:text-white/90 mb-8">
+              Confirm Tutor Deletion
+            </h4>
             <div className="flex justify-center gap-4">
-              <button className="flex items-center gap-2 rounded-2xl border border-gray-300 bg-[#F8C723] px-10 py-2 text-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 hover:text-gray-800" onClick={handleDeleteTutor}>
+              <button
+                className="flex items-center gap-2 rounded-2xl border border-gray-300 bg-[#F8C723] px-10 py-2 text-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 hover:text-gray-800"
+                onClick={handleDeleteTutor}
+              >
                 Yes, Delete Tutor
               </button>
-              <button className="px-4 py-2 rounded-2xl border border-[#F8C723] text-gray-800" onClick={() => setIsDeleteOpen(false)}>
+              <button
+                className="px-4 py-2 rounded-2xl border border-[#F8C723] text-gray-800"
+                onClick={() => setIsDeleteOpen(false)}
+              >
                 <X size={18} className="text-[#F8C723]" />
               </button>
             </div>
@@ -501,14 +522,26 @@ function ProfileCards() {
   );
 }
 
-function FileUploadBox({ selectedFile, setSelectedFile, previewImage, isImageRemoved, setIsImageRemoved, }: {
+function FileUploadBox({
+  selectedFile,
+  setSelectedFile,
+  previewImage,
+  isImageRemoved,
+  setIsImageRemoved,
+}: {
   selectedFile: File | null;
   setSelectedFile: React.Dispatch<React.SetStateAction<File | null>>;
   previewImage?: string | null;
   isImageRemoved: boolean;
   setIsImageRemoved: React.Dispatch<React.SetStateAction<boolean>>;
 }) {
-  const onDrop = useCallback((acceptedFiles: File[]) => { if (acceptedFiles.length > 0) { setSelectedFile(acceptedFiles[0]); setIsImageRemoved(false); } },
+  const onDrop = useCallback(
+    (acceptedFiles: File[]) => {
+      if (acceptedFiles.length > 0) {
+        setSelectedFile(acceptedFiles[0]);
+        setIsImageRemoved(false);
+      }
+    },
     [setSelectedFile, setIsImageRemoved]
   );
 
@@ -522,8 +555,7 @@ function FileUploadBox({ selectedFile, setSelectedFile, previewImage, isImageRem
     setIsImageRemoved(true);
   };
 
-  const displayImage =
-    !isImageRemoved && (selectedFile ? URL.createObjectURL(selectedFile) : previewImage);
+  const displayImage = !isImageRemoved && (selectedFile ? URL.createObjectURL(selectedFile) : previewImage);
 
   return displayImage ? (
     <div className="bg-white flex justify-between items-center px-4 py-3 rounded-xl shadow border h-[200px]">
@@ -531,11 +563,7 @@ function FileUploadBox({ selectedFile, setSelectedFile, previewImage, isImageRem
         <img src={displayImage} alt="Preview" className="h-12 w-12 object-contain" />
         <div>
           <p className="text-sm font-medium">{selectedFile?.name || "Current Image"}</p>
-          {selectedFile && (
-            <p className="text-xs text-gray-500">
-              {(selectedFile.size / (1024 * 1024)).toFixed(1)} MB
-            </p>
-          )}
+          {selectedFile && <p className="text-xs text-gray-500">{(selectedFile.size / (1024 * 1024)).toFixed(1)} MB</p>}
         </div>
       </div>
       <button onClick={handleDelete} className="text-gray-500 hover:text-red-500">
@@ -550,18 +578,12 @@ function FileUploadBox({ selectedFile, setSelectedFile, previewImage, isImageRem
     >
       <input {...getInputProps()} />
       <div className="flex flex-col justify-center items-center text-center h-full gap-2">
-        <img
-          src={Upload || "https://via.placeholder.com/50"}
-          alt="Upload Icon"
-          className="h-12 w-12 object-contain"
-        />
+        <img src={Upload || "https://via.placeholder.com/50"} alt="Upload Icon" className="h-12 w-12 object-contain" />
         <p className="text-sm">
           {isDragActive ? "Drop Files or" : "Drag & Drop Files or"}{" "}
           <span className="font-medium underline text-brand-500">Browse File</span>
         </p>
-        <span className="text-sm text-gray-700">
-          Supported: JPEG, PNG, GIF, PDF, MP4, etc.
-        </span>
+        <span className="text-sm text-gray-700">Supported: JPEG, PNG, GIF, PDF, MP4, etc.</span>
       </div>
     </div>
   );
@@ -594,18 +616,16 @@ function CustomDropdown<T extends string>({
   }, []);
 
   const handleSelect = (val: T) => {
-    // Only update selected value
     onSelect?.(val);
-    setIsOpen(false); // just close dropdown
+    setIsOpen(false);
   };
-
 
   return (
     <div className="relative" ref={dropdownRef}>
       <button
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
-        className="peer w-full appearance-none rounded-md border border-gray-300 bg-[#F5F5F5] px-4 pr-10 py-2.5 text-left text-gray-400
+        className="peer w-full appearance-none rounded-md border border-gray-300 bg-[#F5F5F5] px-4 pr-10 py-2.5 text-left text-gray-600
           focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:bg-gray-800 dark:text-white dark:border-gray-600"
       >
         {value || label}
@@ -624,8 +644,8 @@ function CustomDropdown<T extends string>({
             <li
               key={option}
               onClick={(e) => {
-                e.stopPropagation(); // Prevent document click
-                e.preventDefault();  // Prevent form submit
+                e.stopPropagation();
+                e.preventDefault();
                 handleSelect(option);
               }}
               className="cursor-pointer px-4 py-2 text-sm text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700"

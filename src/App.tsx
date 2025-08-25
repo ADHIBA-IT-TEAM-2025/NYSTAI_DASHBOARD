@@ -85,8 +85,8 @@ export default function App() {
             path="/Students-Tasks/assignment/:token/:studentId?"
             element={<StudentAssignment />}
           />
-          <Route path="/student/login/:token" element={<StudentLogin />} />
-          <Route path="/student/certificate/:studentId" element={<Certificate />} />
+          <Route path="/student/login" element={<StudentLogin />} />
+          <Route path="/student/certificate" element={<Certificate />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Router>
