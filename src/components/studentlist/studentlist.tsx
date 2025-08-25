@@ -6,14 +6,12 @@ import {
   TableRow,
 } from "../ui/table";
 import { useState, useRef, useEffect } from "react";
-import { MoreVertical } from "lucide-react";
+import { MoreVertical, X, PlusCircleIcon } from "lucide-react";
 import Badge from "../ui/badge/Badge";
 import axios from "axios";
 import { Link } from "react-router";
 import { Modal } from "../ui/modal";
-import { X } from "lucide-react";
 import toast from "react-hot-toast";
-import { PlusCircleIcon } from "lucide-react";
 import { Dropdown } from "../../components/ui/dropdown/Dropdown";
 import { DropdownItem } from "../../components/ui/dropdown/DropdownItem";
 
@@ -27,74 +25,8 @@ type Student = {
   end_date: string;
   course_duration: string;
   passport_photo_url: string;
-  certificate_status: "compeleted" | "Pending";
+  certificate_status: "Issued" | "Pending" | "Completed";
 };
-
-function UserDropdown({ courses, selectedCourse, onSelectCourse }: {
-  courses: string[];
-  selectedCourse: string | null;
-  onSelectCourse: (course: string | null) => void;
-}) {
-  const [isOpen, setIsOpen] = useState(false);
-
-  const toggleDropdown = () => setIsOpen(!isOpen);
-  const closeDropdown = () => setIsOpen(false);
-
-  return (
-    <div className="relative">
-      <button
-        onClick={toggleDropdown}
-        className="flex items-center gap-2 rounded-2xl border border-gray-300 bg-[#F8C723] px-4 py-2 text-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 hover:text-gray-800"
-      >
-        <span className="block mr-1 font-medium text-theme-sm">
-          {selectedCourse || "All Courses"}
-        </span>
-        <svg
-          className={`stroke-gray-500 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
-          width="18"
-          height="20"
-          viewBox="0 0 18 20"
-          fill="none"
-        >
-          <path
-            d="M4.3125 8.65625L9 13.3437L13.6875 8.65625"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-      </button>
-
-      <Dropdown
-        isOpen={isOpen}
-        onClose={closeDropdown}
-        className="absolute right-0 mt-[17px] flex w-[220px] flex-col rounded-2xl border border-gray-200 bg-white p-3 shadow-theme-lg"
-      >
-        <ul className="flex flex-col gap-1">
-          <li>
-            <DropdownItem
-              onItemClick={() => { onSelectCourse(null); closeDropdown(); }}
-              className="px-3 py-2 font-medium text-gray-700 rounded-lg hover:bg-gray-100"
-            >
-              All Courses
-            </DropdownItem>
-          </li>
-          {courses.map((course) => (
-            <li key={course}>
-              <DropdownItem
-                onItemClick={() => { onSelectCourse(course); closeDropdown(); }}
-                className="px-3 py-2 font-medium text-gray-700 rounded-lg hover:bg-gray-100"
-              >
-                {course}
-              </DropdownItem>
-            </li>
-          ))}
-        </ul>
-      </Dropdown>
-    </div>
-  );
-}
 
 function FilterDropdown({
   label,
@@ -175,8 +107,6 @@ function FilterDropdown({
   );
 }
 
-
-
 export default function BasicTableOne() {
   const [students, setStudents] = useState<Student[]>([]);
   const [loading, setLoading] = useState(true);
@@ -185,11 +115,7 @@ export default function BasicTableOne() {
   const [selectedCourse, setSelectedCourse] = useState<string | null>(null);
   const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
   const [courseList, setCourseList] = useState<string[]>([]);
-  const [statusList, setStatusList] = useState<string[]>([
-    "Issued",
-    "Pending",
-    "Completed",
-  ]);
+  const [statusList, setStatusList] = useState<string[]>([]);
 
   useEffect(() => {
     axios
@@ -199,11 +125,15 @@ export default function BasicTableOne() {
         setStudents(fetchedStudents);
 
         // Extract unique course list
-        const uniqueCourses = Array.from(new Set(fetchedStudents.map((s) => s.course_enrolled)));
+        const uniqueCourses = Array.from(
+          new Set(fetchedStudents.map((s) => s.course_enrolled))
+        );
         setCourseList(uniqueCourses);
 
-        // ✅ Extract unique certificate statuses
-        const uniqueStatuses = Array.from(new Set(fetchedStudents.map((s) => s.certificate_status)));
+        // Extract unique statuses
+        const uniqueStatuses = Array.from(
+          new Set(fetchedStudents.map((s) => s.certificate_status))
+        );
         setStatusList(uniqueStatuses);
 
         setLoading(false);
@@ -217,8 +147,12 @@ export default function BasicTableOne() {
   if (loading) return <p className="p-4">Loading students...</p>;
 
   const filteredStudents = students.filter((s) => {
-    const courseMatch = selectedCourse ? s.course_enrolled === selectedCourse : true;
-    const statusMatch = selectedStatus ? s.certificate_status === selectedStatus : true;
+    const courseMatch = selectedCourse
+      ? s.course_enrolled === selectedCourse
+      : true;
+    const statusMatch = selectedStatus
+      ? s.certificate_status === selectedStatus
+      : true;
     return courseMatch && statusMatch;
   });
 
@@ -273,7 +207,7 @@ export default function BasicTableOne() {
             onSelect={setSelectedCourse}
           />
 
-          {/* Certificate Status filter */}
+          {/* Status filter */}
           <FilterDropdown
             label="Status"
             options={statusList}
@@ -281,7 +215,7 @@ export default function BasicTableOne() {
             onSelect={setSelectedStatus}
           />
         </div>
-    </div>
+      </div>
 
       <div className="relative overflow-hidden rounded-xl border border-gray-200 bg-white">
         <div className="w-full overflow-x-auto">
@@ -301,7 +235,7 @@ export default function BasicTableOne() {
                   Duration
                 </TableCell>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start">
-                  tutor
+                  Tutor
                 </TableCell>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start">
                   Certificate
@@ -329,7 +263,9 @@ export default function BasicTableOne() {
                         <span className="block font-medium text-gray-800">
                           {student.name} {student.last_name}
                         </span>
-                        <span className="block text-gray-500 text-xs">Student</span>
+                        <span className="block text-gray-500 text-xs">
+                          Student
+                        </span>
                       </div>
                     </div>
                   </TableCell>
@@ -469,4 +405,3 @@ function ActionDropdown({
     </div>
   );
 }
-

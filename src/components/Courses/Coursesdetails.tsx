@@ -8,8 +8,6 @@ import PageBreadcrumb from "../common/PageBreadCrumb";
 import { Modal } from "../ui/modal";
 import Label from "../form/Label";
 import Input from "../form/input/InputField";
-import Upload from "../../icons/Upload icon.png";
-import Uploadafter from "../../icons/Upload icon.png";
 
 interface Course {
     course_name: string;

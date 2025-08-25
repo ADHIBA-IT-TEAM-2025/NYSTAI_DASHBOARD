@@ -1,6 +1,3 @@
-import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
-
 export default function Certificate() {
     // const { studentId } = useParams();
     // const [certificate, setCertificate] = useState<any>(null);
