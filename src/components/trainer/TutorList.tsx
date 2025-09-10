@@ -100,7 +100,7 @@ function ProfileCards() {
     experience_years: "",
     joining_date: "",
   });
-
+  const [isDeleting, setIsDeleting] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isImageRemoved, setIsImageRemoved] = useState(false);
 
@@ -166,6 +166,7 @@ function ProfileCards() {
   const handleDeleteTutor = async () => {
     if (!selectedTutor) return;
     try {
+      setIsDeleting(true);
       const res = await axios.delete(
         `https://nystai-backend.onrender.com/NystaiTutors/deletetutor/${selectedTutor.tutor_id}`
       );
@@ -176,6 +177,8 @@ function ProfileCards() {
     } catch (error: any) {
       console.error(error);
       toast.error(error?.response?.data?.message || "Failed to delete tutor");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -285,28 +288,29 @@ function ProfileCards() {
         >
           {/* Card Info */}
           <div className="absolute top-25 left-0 w-full p-4 bg-white text-black opacity-0 group-hover:opacity-100 transition-opacity duration-500 z-0">
-            <div className="flex mb-3">
-              <span className="flex-[0_0_20%] font-medium text-gray-500 dark:text-gray-400">Coaching</span>
-              <span className="flex-[0_0_10%] font-medium text-gray-500 dark:text-gray-400 text-center">:</span>
-              <span className="flex-[0_0_70%] break-words whitespace-normal text-gray-800 dark:text-white/90">
+            <div className="grid grid-cols-[20%_10%_1fr] gap-2 mb-3">
+              <span className="font-medium text-gray-500 dark:text-gray-400">Coaching</span>
+              <span className="font-medium text-gray-500 dark:text-gray-400 text-center">:</span>
+              <span className="break-words whitespace-normal text-gray-800 dark:text-white/90">
                 {person.expertise}
               </span>
             </div>
-            <div className="flex mb-3">
-              <span className="flex-[0_0_20%] font-medium text-gray-500 dark:text-gray-400">Contact</span>
-              <span className="flex-[0_0_10%] font-medium text-gray-500 dark:text-gray-400 text-center">:</span>
-              <span className="flex-[0_0_70%] break-words whitespace-normal text-gray-800 dark:text-white/90">
+            <div className="grid grid-cols-[20%_10%_1fr] gap-2 mb-3">
+              <span className="font-medium text-gray-500 dark:text-gray-400">Contact</span>
+              <span className="font-medium text-gray-500 dark:text-gray-400 text-center">:</span>
+              <span className="break-words whitespace-normal text-gray-800 dark:text-white/90">
                 {person.contact}
               </span>
             </div>
-            <div className="flex mb-3">
-              <span className="flex-[0_0_20%] font-medium text-gray-500 dark:text-gray-400">Mail Id</span>
-              <span className="flex-[0_0_10%] font-medium text-gray-500 dark:text-gray-400 text-center">:</span>
-              <span className="flex-[0_0_70%] break-words whitespace-normal text-gray-800 dark:text-white/90">
+            <div className="grid grid-cols-[20%_10%_1fr] gap-2 mb-3">
+              <span className="font-medium text-gray-500 dark:text-gray-400">Mail Id</span>
+              <span className="font-medium text-gray-500 dark:text-gray-400 text-center">:</span>
+              <span className="break-words whitespace-normal text-gray-800 dark:text-white/90">
                 {person.email}
               </span>
             </div>
           </div>
+
 
           {/* Image */}
           <div className="absolute top-0 left-0 w-full h-full z-10 transform transition-transform duration-500 ease-in-out group-hover:-translate-y-50">
@@ -321,17 +325,19 @@ function ProfileCards() {
             </div>
             <div className="flex gap-2">
               <button
-                className="bg-transparent p-1 rounded-full hover:bg-white hover:bg-opacity-20 transition"
+                className="bg-transparent p-1 rounded-full hover:bg-[#F8C723] transition"
                 onClick={() => openEditModal(person)}
               >
                 <Edit className="text-white" size={18} />
               </button>
+
               <button
-                className="bg-transparent p-1 rounded-full hover:bg-white hover:bg-opacity-20 transition"
+                className="bg-transparent p-1 rounded-full hover:bg-[#F8C723] transition"
                 onClick={() => openDeleteModal(person)}
               >
                 <Trash2 className="text-white" size={18} />
               </button>
+
             </div>
           </div>
 
@@ -398,10 +404,11 @@ function ProfileCards() {
                 <div>
                   <Label>Gender</Label>
                   <CustomDropdown
-                    options={["Male", "Female", "Other"]}
+                    staticOptions={["Male", "Female", "Other"]}
                     value={formData.gender}
                     onSelect={(value) => setFormData((prev) => ({ ...prev, gender: value }))}
                   />
+
                 </div>
               </div>
 
@@ -455,9 +462,10 @@ function ProfileCards() {
                 <div>
                   <Label>Expertise / Courses</Label>
                   <CustomDropdown
-                    options={["CCTV", "Home Automation", "Networking", "Other"]}
+                    label="Select Expertise"
                     value={formData.expertise}
                     onSelect={(value) => setFormData((prev) => ({ ...prev, expertise: value }))}
+                    apiEndpoint="https://nystai-backend.onrender.com/Allcourses/get-all-courses"
                   />
                 </div>
               </div>
@@ -503,11 +511,13 @@ function ProfileCards() {
             </h4>
             <div className="flex justify-center gap-4">
               <button
-                className="flex items-center gap-2 rounded-2xl border border-gray-300 bg-[#F8C723] px-10 py-2 text-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 hover:text-gray-800"
+                className="flex items-center gap-2 rounded-2xl border border-gray-300 bg-[#F8C723] px-10 py-2 text-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 hover:text-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
                 onClick={handleDeleteTutor}
+                disabled={isDeleting}
               >
-                Yes, Delete Tutor
+                {isDeleting ? "Deleting..." : "Yes, Delete Tutor"}
               </button>
+
               <button
                 className="px-4 py-2 rounded-2xl border border-[#F8C723] text-gray-800"
                 onClick={() => setIsDeleteOpen(false)}
@@ -591,18 +601,22 @@ function FileUploadBox({
 
 type CustomDropdownProps<T extends string> = {
   label?: string;
-  options: T[];
   value: T;
   onSelect?: (value: T) => void;
+  apiEndpoint?: string; // Optional API endpoint to fetch options
+  staticOptions?: T[]; // Fallback static options if no API
 };
 
 function CustomDropdown<T extends string>({
   label = "Pick an option",
-  options = [],
   value,
   onSelect,
+  apiEndpoint,
+  staticOptions = [],
 }: CustomDropdownProps<T>) {
   const [isOpen, setIsOpen] = useState(false);
+  const [options, setOptions] = useState<T[]>(staticOptions);
+  const [loading, setLoading] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -614,6 +628,24 @@ function CustomDropdown<T extends string>({
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  useEffect(() => {
+    if (!apiEndpoint) return;
+    const fetchOptions = async () => {
+      setLoading(true);
+      try {
+        const response = await axios.get(apiEndpoint);
+        // Assuming API returns an array of objects with course_name
+        const apiOptions = response.data.data.map((c: any) => c.course_name);
+        setOptions(apiOptions);
+      } catch (err) {
+        console.error("Failed to fetch dropdown options:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchOptions();
+  }, [apiEndpoint]);
 
   const handleSelect = (val: T) => {
     onSelect?.(val);
@@ -628,7 +660,7 @@ function CustomDropdown<T extends string>({
         className="peer w-full appearance-none rounded-md border border-gray-300 bg-[#F5F5F5] px-4 pr-10 py-2.5 text-left text-gray-600
           focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:bg-gray-800 dark:text-white dark:border-gray-600"
       >
-        {value || label}
+        {loading ? "Loading..." : value || label}
       </button>
 
       <span
@@ -638,21 +670,27 @@ function CustomDropdown<T extends string>({
         <FontAwesomeIcon icon={faChevronDown} />
       </span>
 
-      {isOpen && (
+      {isOpen && !loading && (
         <ul className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 shadow-lg">
-          {options.map((option) => (
-            <li
-              key={option}
-              onClick={(e) => {
-                e.stopPropagation();
-                e.preventDefault();
-                handleSelect(option);
-              }}
-              className="cursor-pointer px-4 py-2 text-sm text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
-            >
-              {option}
+          {options.length > 0 ? (
+            options.map((option) => (
+              <li
+                key={option}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  handleSelect(option);
+                }}
+                className="cursor-pointer px-4 py-2 text-sm text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
+              >
+                {option}
+              </li>
+            ))
+          ) : (
+            <li className="px-4 py-2 text-sm text-gray-500 dark:text-gray-400">
+              No options found
             </li>
-          ))}
+          )}
         </ul>
       )}
     </div>

@@ -7,6 +7,8 @@ import { faChevronDown } from "@fortawesome/free-solid-svg-icons";
 import PageMeta from "../common/PageMeta";
 import PageBreadcrumb from "../common/PageBreadCrumb";
 import { toast } from "react-hot-toast";
+import { Modal } from "../ui/modal";
+import { Pencil, Trash2, X } from "lucide-react";
 
 type StudentFormData = {
     name: string;
@@ -36,6 +38,7 @@ type StudentFormData = {
     aadhar_card?: string;
     sslc_marksheet?: string;
     passport_photo_url?: string;
+    certificate_url?: string; // ✅ Add this
     student_id?: string;
 };
 
@@ -46,6 +49,28 @@ export default function CertificateStatus() {
     const [certificateFile, setCertificateFile] = useState<File | null>(null);
     const [uploading, setUploading] = useState(false);
     const [saving, setSaving] = useState(false);
+    const [certificateUrl, setCertificateUrl] = useState<string | null>(null);
+    const [isEditOpen, setIsEditOpen] = useState(false);
+    const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+    const [isDeleteLoading, setIsDeleteLoading] = useState(false);
+
+    const fetchCertificate = async () => {
+        if (!student?.student_id) return;
+        try {
+            const res = await axios.get(
+                `https://nystai-backend.onrender.com/studentscertificates/${student.student_id}`
+            );
+            setCertificateUrl(res.data?.certificateUrl || null); // 🔹 fixed key
+        } catch (err) {
+            console.error("Failed to fetch certificate:", err);
+        }
+    };
+
+    useEffect(() => {
+        if (student?.student_id) {
+            fetchCertificate();
+        }
+    }, [student]);
 
     useEffect(() => {
         if (id) {
@@ -101,7 +126,7 @@ export default function CertificateStatus() {
             const updated = res.data.data;
 
             if (updated.certificate_status === newStatus) {
-                toast.success("✅ Certificate status updated successfully!");
+                toast.success(" Certificate status updated successfully!");
                 setStudent(updated);
             } else {
                 toast.error("Update failed: certificate status not changed.");
@@ -138,12 +163,11 @@ export default function CertificateStatus() {
                 formData,
                 { headers: { "Content-Type": "multipart/form-data" } }
             );
-
-            toast.success("🎉 Certificate uploaded successfully!");
+            toast.success("Certificate uploaded successfully!");
             setCertificateFile(null);
-
-            // reset input field
             (document.getElementById("certificateInput") as HTMLInputElement).value = "";
+            fetchCertificate(); // 🔹 refetch after upload
+
         } catch (error: any) {
             toast.error(
                 "Upload failed: " + (error.response?.data?.message || error.message)
@@ -155,6 +179,46 @@ export default function CertificateStatus() {
 
     const handleStatusChange = (value: string) => {
         setFormData((prev) => ({ ...prev, certificate_status: value }));
+    };
+
+    const handleEditCertificate = async () => {
+        if (!student?.student_id || !certificateFile) {
+            toast.error("Please select a new certificate to upload.");
+            return;
+        }
+        try {
+            const formData = new FormData();
+            formData.append("certificate", certificateFile);
+
+            await axios.put(
+                `https://nystai-backend.onrender.com/studentscertificates/${student.student_id}`,
+                formData,
+                { headers: { "Content-Type": "multipart/form-data" } }
+            );
+
+            toast.success("Certificate updated!");
+            setIsEditOpen(false);
+            fetchCertificate();
+        } catch (err: any) {
+            toast.error("Update failed: " + (err.response?.data?.message || err.message));
+        }
+    };
+
+    const handleDeleteCertificate = async () => {
+        if (!student?.student_id) return;
+        try {
+            setIsDeleteLoading(true);
+            await axios.delete(
+                `https://nystai-backend.onrender.com/studentscertificates/${student.student_id}`
+            );
+            toast.success("Certificate deleted!");
+            setCertificateUrl(null);
+            setIsDeleteOpen(false);
+        } catch (err: any) {
+            toast.error("Delete failed: " + (err.response?.data?.message || err.message));
+        } finally {
+            setIsDeleteLoading(false);
+        }
     };
 
     const InfoRow = ({ label, value }: { label: string; value?: string | number }) => (
@@ -193,7 +257,6 @@ export default function CertificateStatus() {
                                             student.passport_photo_url ||
                                             "https://via.placeholder.com/300"
                                         }
-                                        alt={`${student.name} ${student.last_name}`}
                                         className="object-cover w-full h-full"
                                     />
                                 </div>
@@ -228,7 +291,6 @@ export default function CertificateStatus() {
                         <p>Loading student data...</p>
                     )}
 
-                    {/* Certificate Status */}
                     <div className="w-full max-w-xs mt-6">
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                             Certificate Status
@@ -250,12 +312,12 @@ export default function CertificateStatus() {
                         </button>
                     </div>
 
-                    {/* Upload Certificate if completed */}
                     {student?.certificate_status === "completed" && (
                         <div className="mt-6 text-center space-y-4">
                             <h2 className="font-semibold text-lg text-gray-800 dark:text-gray-200">
                                 Upload Certificate
                             </h2>
+
                             <input
                                 id="certificateInput"
                                 type="file"
@@ -268,19 +330,124 @@ export default function CertificateStatus() {
                             <button
                                 onClick={handleUploadCertificate}
                                 disabled={uploading}
-                                className="mt-3 px-6 py-2 rounded-2xl bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
+                                className="mt-3 px-6 py-2 rounded-2xl bg-[#F8C723] text-white hover:bg-blue-700 disabled:opacity-50"
                             >
                                 {uploading ? "Uploading..." : "Upload"}
                             </button>
                         </div>
                     )}
+
+                    {certificateUrl && (
+                        <div className="mt-6 space-y-4 text-center">
+                            <h2 className="font-semibold text-lg text-gray-800 dark:text-gray-200">
+                                Uploaded Certificate
+                            </h2>
+                            {certificateUrl.endsWith(".pdf") ? (
+                                <iframe src={certificateUrl} className="w-full h-96 border rounded-md"></iframe>
+                            ) : (
+                                <img src={certificateUrl} alt="Certificate" className="w-auto h-64 mx-auto rounded-lg border" />
+                            )}
+
+                            <div className="flex justify-center gap-4 mt-4">
+                                {/* Edit Button */}
+                                <button
+                                    onClick={() => setIsEditOpen(true)}
+                                    className="flex items-center gap-2 rounded-2xl border border-gray-300 bg-[#F8C723] px-6 py-2 text-sm font-medium text-gray-700 shadow hover:bg-gray-50"
+                                >
+                                    <Pencil className="w-4 h-4" /> Edit
+                                </button>
+
+                                {/* Delete Button */}
+                                <button
+                                    onClick={() => setIsDeleteOpen(true)}
+                                    className="flex items-center gap-2 rounded-2xl border border-gray-300 bg-[#F8C723] px-6 py-2 text-sm font-medium text-gray-700 shadow hover:bg-gray-50"
+                                >
+                                    <Trash2 className="w-4 h-4" /> Delete
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    <Modal isOpen={isEditOpen} onClose={() => setIsEditOpen(false)} className="max-w-lg m-4">
+                        <div className="p-6 bg-white rounded-2xl">
+                            <h3 className="text-lg font-semibold mb-4">Update Certificate</h3>
+
+                            {/* Show existing certificate */}
+                            {student?.certificate_url && (
+                                <div className="mb-4">
+                                    {student.certificate_url.endsWith(".pdf") ? (
+                                        <a
+                                            href={student.certificate_url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-blue-600 underline"
+                                        >
+                                            View Current Certificate (PDF)
+                                        </a>
+                                    ) : (
+                                        <img
+                                            src={student.certificate_url}
+                                            alt="Current Certificate"
+                                            className="w-full h-60 object-contain border rounded-md"
+                                        />
+                                    )}
+                                </div>
+                            )}
+
+                            {/* File input for new certificate */}
+                            <input
+                                type="file"
+                                accept="image/*,application/pdf"
+                                onChange={(e) => setCertificateFile(e.target.files?.[0] || null)}
+                                className="block w-full border p-2 rounded-md"
+                            />
+
+                            <div className="flex justify-center gap-4 mt-6">
+                                <button
+                                    onClick={() => setIsEditOpen(false)}
+                                    className="px-4 py-2 border rounded-md"
+                                >
+                                    <X size={18} />
+                                </button>
+                                <button
+                                    onClick={handleEditCertificate}
+                                    className="px-4 py-2 bg-[#F8C723] text-white rounded-md"
+                                >
+                                    Update Certificate
+                                </button>
+                            </div>
+                        </div>
+                    </Modal>
+
+
+                    <Modal isOpen={isDeleteOpen} onClose={() => setIsDeleteOpen(false)} className="max-w-md m-4">
+                        <div className="p-6 bg-white rounded-2xl">
+                            <h4 className="text-xl font-semibold mb-6">Confirm Certificate Deletion</h4>
+                            <div className="flex justify-center gap-4">
+                                <button
+                                    onClick={() => setIsDeleteOpen(false)}
+                                    className="px-6 py-2 border rounded-md"
+                                >
+                                    <X size={18} />
+                                </button>
+                                <button
+                                    onClick={handleDeleteCertificate}
+                                    disabled={isDeleteLoading}
+                                    className="px-6 py-2 bg-[#F8C723] text-white rounded-md"
+                                >
+                                    {isDeleteLoading ? "Deleting..." : "Yes, Delete"}
+                                </button>
+
+                            </div>
+                        </div>
+                    </Modal>
+
                 </div>
             </ComponentCard>
         </>
     );
 }
 
-/* ✅ Custom Dropdown Component */
 function CustomDropdown({
     label = "Select",
     options = [],
@@ -341,3 +508,5 @@ function CustomDropdown({
         </div>
     );
 }
+
+

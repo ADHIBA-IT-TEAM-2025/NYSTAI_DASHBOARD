@@ -9,9 +9,36 @@ import Upload from "../../../icons/Upload icon.png";
 import Uploadafter from "../../../icons/OIP.webp";
 import { toast } from 'react-hot-toast';
 
+interface StudentFormData {
+  name: string;
+  last_name: string;
+  dob: string;
+  gender: string;
+  email: string;
+  phone: string;
+  alt_phone: string;
+  aadhar_number: string;
+  pan_number: string;
+  address: string;
+  pincode: string;
+  state: string;
+  department: string;
+  course: string;
+  year_of_passed: string;
+  experience: string;
+  department_stream: string;
+  course_duration: string;
+  join_date: string;
+  end_date: string;
+  course_enrolled: string;
+  batch: string;
+  tutor: string;
+  tutor_id: number | null; // ✅ number or null
+}
+
 
 export default function StudentAddForm() {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<StudentFormData>({
     name: "",
     last_name: "",
     dob: "",
@@ -35,7 +62,10 @@ export default function StudentAddForm() {
     course_enrolled: "",
     batch: "",
     tutor: "",
+    tutor_id: null, // ✅ initial null
   });
+
+
 
   const [documents, setDocuments] = useState({
     passport_photo: null as File | null,
@@ -51,12 +81,14 @@ export default function StudentAddForm() {
   const validateForm = () => {
     const newErrors: { [key: string]: string } = {};
 
+    // First Name
     if (!formData.name.trim()) {
       newErrors.name = "First name is required";
     } else if (!/^[A-Za-z]{4,30}$/.test(formData.name)) {
       newErrors.name = "Name must be 4–30 letters only";
     }
 
+    // Last Name
     if (!formData.last_name) {
       newErrors.last_name = "Last name is required";
     } else if (formData.last_name.length > 4) {
@@ -65,11 +97,11 @@ export default function StudentAddForm() {
       newErrors.last_name = "Last name must contain only letters";
     }
 
+    // DOB
     if (!formData.dob) {
       newErrors.dob = "Date of birth is required";
     } else {
-      const age =
-        new Date().getFullYear() - new Date(formData.dob).getFullYear();
+      const age = new Date().getFullYear() - new Date(formData.dob).getFullYear();
       if (age < 21) {
         newErrors.dob = "Student must be at least 21 years old";
       }
@@ -77,6 +109,7 @@ export default function StudentAddForm() {
 
     if (!formData.gender) newErrors.gender = "Gender is required";
 
+    // Email
     if (!formData.email) {
       newErrors.email = "Email is required";
     } else if (
@@ -87,6 +120,7 @@ export default function StudentAddForm() {
       newErrors.email = "Invalid or unsupported email domain";
     }
 
+    // Phone
     if (!formData.phone) {
       newErrors.phone = "Phone number is required";
     } else if (!/^[6-9]\d{9}$/.test(formData.phone)) {
@@ -99,53 +133,86 @@ export default function StudentAddForm() {
       newErrors.alt_phone = "Invalid alternate phone number";
     }
 
+    // Aadhaar
     if (!/^\d{12}$/.test(formData.aadhar_number || "")) {
       newErrors.aadhar_number = "Aadhar must be 12 digits";
     }
 
+    // PAN
     if (!/^[A-Z]{5}[0-9]{4}[A-Z]$/.test(formData.pan_number)) {
       newErrors.pan_number = "Invalid PAN number format";
     }
 
-    if (!formData.address) newErrors.address = "Address is required";
+    // Address ✅ length validation
+    if (!formData.address) {
+      newErrors.address = "Address is required";
+    } else if (formData.address.length < 10 || formData.address.length > 100) {
+      newErrors.address = "Address must be between 10 and 100 characters";
+    }
 
+    // Pincode
     if (!/^\d{6}$/.test(formData.pincode)) {
       newErrors.pincode = "Enter a valid 6-digit pincode";
     }
 
-    if (!formData.state) newErrors.state = "State is required";
-    if (!formData.department) newErrors.department = "Department is required";
-    if (!formData.course) newErrors.course = "Course is required";
+    // State ✅ length validation
+    if (!formData.state) {
+      newErrors.state = "State is required";
+    } else if (formData.state.length < 2 || formData.state.length > 30) {
+      newErrors.state = "State must be between 2 and 30 characters";
+    }
 
+    // Department ✅ length validation
+    if (!formData.department) {
+      newErrors.department = "Department is required";
+    } else if (formData.department.length < 2 || formData.department.length > 50) {
+      newErrors.department = "Department must be 2–50 characters";
+    }
+
+    // Course ✅ length validation
+    if (!formData.course) {
+      newErrors.course = "Course is required";
+    } else if (formData.course.length < 2 || formData.course.length > 50) {
+      newErrors.course = "Course must be 2–50 characters";
+    }
+
+    // Year of Passed
     if (!/^(19|20)\d{2}$/.test(formData.year_of_passed)) {
       newErrors.year_of_passed = "Enter a valid year (e.g. 2022)";
     }
 
-    if (!formData.experience) newErrors.experience = "Experience is required";
+    // Experience ✅ length validation
+    if (!formData.experience) {
+      newErrors.experience = "Experience is required";
+    } else if (formData.experience.length > 20) {
+      newErrors.experience = "Experience must be at most 20 characters";
+    }
 
     if (!formData.department_stream.trim()) {
       newErrors.department_stream = "Department / Stream is required";
-    } else if (!/^[A-Za-z0-9 ]+$/.test(formData.department_stream)) {
-      newErrors.department_stream =
-        "Only letters and numbers allowed. No special characters.";
+    } else if (!/^[A-Za-z]+$/.test(formData.department_stream)) {
+      newErrors.department_stream = "Only letters allowed";
+    } else if (formData.department_stream.length > 20) {
+      newErrors.department_stream = "Must be at most 20 characters";
     }
 
     if (!formData.course_duration.trim()) {
       newErrors.course_duration = "Course Duration is required";
     } else if (!/^\d+$/.test(formData.course_duration)) {
       newErrors.course_duration = "Only numbers are allowed";
+    } else if (formData.course_duration.length > 20) {
+      newErrors.course_duration = "Must be at most 20 digits";
     }
+
 
     if (!formData.join_date) newErrors.join_date = "Join date is required";
     if (!formData.end_date) newErrors.end_date = "End date is required";
 
-    if (!["IOT", "CCTV"].includes(formData.course_enrolled)) {
-      newErrors.course_enrolled = "Course must be IOT or CCTV";
-    }
 
     if (!formData.batch) newErrors.batch = "Batch is required";
     if (!formData.tutor) newErrors.tutor = "Tutor is required";
 
+    // File uploads
     if (!documents.passport_photo)
       newErrors.passport_photo = "Passport photo is required";
     if (!documents.pan_card) newErrors.pan_card = "PAN card is required";
@@ -169,8 +236,12 @@ export default function StudentAddForm() {
     const data = new FormData();
 
     for (const key in formData) {
-      data.append(key, formData[key as keyof typeof formData]);
+      const value = formData[key as keyof typeof formData];
+      if (value !== null && value !== undefined) {
+        data.append(key, String(value)); // convert everything to string
+      }
     }
+
 
     if (documents.passport_photo)
       data.append("passport_photo", documents.passport_photo);
@@ -188,13 +259,25 @@ export default function StudentAddForm() {
         }
       );
 
+      const result = await response.json();
+
       if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Server Error ${response.status}: ${errorText}`);
+        // ✅ Check backend validation errors
+        if (result.fields) {
+          Object.entries(result.fields).forEach(([field, value]: any) => {
+            if (!value.success && value.msg) {
+              toast.error(`${field}: ${value.msg}`);
+            }
+          });
+        } else {
+          toast.error(result.message || "Something went wrong");
+        }
+        return;
       }
 
-      const result = await response.json();
+      // ✅ Success
       toast.success("Student inserted! ID: " + result.student_id);
+
     } catch (err: any) {
       if (err.name === "TypeError") {
         toast.error("Network/CORS error: Backend not reachable");
@@ -205,13 +288,64 @@ export default function StudentAddForm() {
       setIsSubmitting(false);
     }
   };
+  const [availableCourses, setAvailableCourses] = useState<{ id: number; course_name: string }[]>([]);
+
+  useEffect(() => {
+    const fetchCourses = async () => {
+      try {
+        const response = await fetch("https://nystai-backend.onrender.com/Allcourses/get-all-courses");
+        const result = await response.json();
+
+        if (result.success) {
+          setAvailableCourses(result.data); // ✅ put fetched courses in state
+        } else {
+          console.error("Failed to fetch courses");
+        }
+      } catch (err) {
+        console.error("Error fetching courses:", err);
+      }
+    };
+
+    fetchCourses();
+  }, []);
+
+  const [availableTutors, setAvailableTutors] = useState<
+    { tutor_id: number; full_name: string }[]
+  >([]);
+
+  useEffect(() => {
+    const fetchTutors = async () => {
+      try {
+        const response = await fetch(
+          "https://nystai-backend.onrender.com/NystaiTutors/getalltutors"
+        );
+        const result = await response.json();
+
+        if (result.success) {
+          // Map API response into { tutor_id, full_name }
+          const tutors = result.tutors.map((tutor: any) => ({
+            tutor_id: tutor.tutor_id,
+            full_name: `${tutor.first_name} ${tutor.last_name || ""}`.trim(),
+          }));
+          setAvailableTutors(tutors);
+        } else {
+          console.error("Failed to fetch tutors");
+        }
+      } catch (err) {
+        console.error("Error fetching tutors:", err);
+      }
+    };
+
+    fetchTutors();
+  }, []);
+
+
 
   return (
     <>
       <div className="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
         <div className="p-4 border-t border-gray-100 dark:border-gray-800 sm:p-6" >
           <div className="space-y-6" >
-
             {/* Heading design */}
             <h2
               className="text-xl font-semibold text-gray-800 dark:text-white/90"
@@ -236,14 +370,16 @@ export default function StudentAddForm() {
                       className={`${errors.name ? 'border border-red-500' : ''}`}
                       value={formData.name}
                       onChange={(e) => {
-                        const value = e.target.value;
-                        const onlyLetters = value.replace(/[^A-Za-z]/g, ''); // removes special chars
-                        setFormData({ ...formData, name: onlyLetters });
+                        const value = e.target.value.replace(/[^A-Za-z]/g, '');
+                        if (value.length <= 20) { // max length check
+                          setFormData({ ...formData, name: value });
+                        }
                       }}
                     />
                     {errors.name && (
                       <p className="text-red-500 text-sm mt-1">{errors.name}</p>
                     )}
+
                   </div>
                 </div>
               </div>
@@ -269,7 +405,6 @@ export default function StudentAddForm() {
                   </div>
                 </div>
               </div>
-
 
               <div className="space-y-6">
                 <div>
@@ -304,8 +439,6 @@ export default function StudentAddForm() {
                   )}
                 </div>
               </div>
-
-
 
               <div className="space-y-6">
                 <div>
@@ -406,11 +539,21 @@ export default function StudentAddForm() {
                 <div>
                   <Label>Address</Label>
                   <div className="relative">
-                    <Input placeholder="123 Street, City" type="text" className={`${errors.address ? 'border border-red-500' : ''}`} value={formData.address}
-                      onChange={(e) => setFormData({ ...formData, address: e.target.value })} />
+                    <Input
+                      placeholder="123 Street, City"
+                      type="text"
+                      className={`${errors.address ? 'border border-red-500' : ''}`}
+                      value={formData.address}
+                      onChange={(e) => {
+                        if (e.target.value.length <= 50) {
+                          setFormData({ ...formData, address: e.target.value });
+                        }
+                      }}
+                    />
                     {errors.address && (
                       <p className="text-red-500 text-sm mt-1">{errors.address}</p>
                     )}
+
                   </div>
                 </div>
               </div>
@@ -442,8 +585,6 @@ export default function StudentAddForm() {
                 </div>
               </div>
 
-
-
               <div className="space-y-6">
                 <div>
                   <Label>State</Label>
@@ -455,9 +596,12 @@ export default function StudentAddForm() {
                       value={formData.state}
                       onChange={(e) => {
                         const onlyChars = e.target.value.replace(/[^a-zA-Z\s]/g, '');
-                        setFormData({ ...formData, state: onlyChars });
+                        if (onlyChars.length <= 30) {
+                          setFormData({ ...formData, state: onlyChars });
+                        }
                       }}
                     />
+
                   </div>
                   {errors.state && (
                     <p className="text-red-500 text-sm mt-1">{errors.state}</p>
@@ -473,14 +617,17 @@ export default function StudentAddForm() {
                 <div>
                   <Label>Department</Label>
                   <div className="relative">
+                    {/* Department */}
                     <Input
                       placeholder="Department Name"
                       type="text"
                       className={`${errors.department ? 'border border-red-500' : ''}`}
                       value={formData.department}
                       onChange={(e) => {
-                        const onlyLettersAndSpaces = e.target.value.replace(/[^a-zA-Z\s]/g, '');
-                        setFormData({ ...formData, department: onlyLettersAndSpaces });
+                        const val = e.target.value.replace(/[^a-zA-Z\s]/g, '');
+                        if (val.length <= 20) {
+                          setFormData({ ...formData, department: val });
+                        }
                       }}
                     />
                   </div>
@@ -500,9 +647,11 @@ export default function StudentAddForm() {
                       type="text"
                       className={`${errors.course ? 'border border-red-500' : ''}`}
                       value={formData.course}
-                      onChange={(e) =>
-                        setFormData({ ...formData, course: e.target.value })
-                      }
+                      onChange={(e) => {
+                        if (e.target.value.length <= 20) {
+                          setFormData({ ...formData, course: e.target.value });
+                        }
+                      }}
                     />
                   </div>
 
@@ -547,9 +696,11 @@ export default function StudentAddForm() {
                       type="text"
                       className={`${errors.experience ? 'border border-red-500' : ''}`}
                       value={formData.experience}
-                      onChange={(e) =>
-                        setFormData({ ...formData, experience: e.target.value })
-                      }
+                      onChange={(e) => {
+                        if (e.target.value.length <= 10) {
+                          setFormData({ ...formData, experience: e.target.value });
+                        }
+                      }}
                     />
                   </div>
 
@@ -578,7 +729,7 @@ export default function StudentAddForm() {
                       className={`${errors.department_stream ? 'border border-red-500' : ''}`}
                       onChange={(e) => {
                         const value = e.target.value;
-                        if (/^[A-Za-z]*$/.test(value)) {
+                        if (/^[A-Za-z]*$/.test(value) && value.length <= 20) {
                           setFormData({ ...formData, department_stream: value });
                         }
                       }}
@@ -602,7 +753,9 @@ export default function StudentAddForm() {
                       value={formData.course_duration}
                       onChange={(e) => {
                         const numbersOnly = e.target.value.replace(/[^0-9]/g, '');
-                        setFormData({ ...formData, course_duration: numbersOnly });
+                        if (numbersOnly.length <= 20) {
+                          setFormData({ ...formData, course_duration: numbersOnly });
+                        }
                       }}
                     />
                     {errors.course_duration && (
@@ -617,7 +770,7 @@ export default function StudentAddForm() {
                   id="join-date-picker"
                   label="Join Date"
                   placeholder="Select a date"
-                  minDate={new Date()}
+                  maxDate={new Date()} // ✅ only past & today allowed
                   value={
                     formData.join_date && !isNaN(Date.parse(formData.join_date))
                       ? new Date(formData.join_date)
@@ -640,6 +793,7 @@ export default function StudentAddForm() {
                     }
                   }}
                 />
+
                 {errors.join_date && (
                   <p className="text-red-500 text-sm">{errors.join_date}</p>
                 )}
@@ -689,18 +843,18 @@ export default function StudentAddForm() {
                 <Label>Course Enrolled</Label>
                 <div className="relative">
                   <CustomDropdown
-                    options={["IOT", "CCTV"]}
-                    value={formData.course_enrolled}
+                    options={availableCourses.map((course) => course.course_name)}
+                    value={formData.course_enrolled}  // 👈 keep formData field name separate
                     onSelect={(value) =>
                       setFormData({ ...formData, course_enrolled: value })
                     }
                   />
+
                   {errors.course_enrolled && (
                     <p className="text-red-500 text-sm mt-1">{errors.course_enrolled}</p>
                   )}
                 </div>
               </div>
-
 
               <div className="space-y-2">
                 <Label>Batch</Label>
@@ -711,35 +865,43 @@ export default function StudentAddForm() {
                     type="text"
                     value={formData.batch}
                     onChange={(e) => {
-                      const inputValue = e.target.value.toUpperCase();
-                      if (/^[A-Z]*$/.test(inputValue)) {
+                      let inputValue = e.target.value.toUpperCase();
+
+                      // Allow only letters and limit length to 3 characters
+                      if (/^[A-Z]*$/.test(inputValue) && inputValue.length <= 1) {
                         setFormData({ ...formData, batch: inputValue });
                       }
                     }}
                   />
+
                   {errors.batch && (
                     <p className="text-red-500 text-sm mt-1">{errors.batch}</p>
                   )}
                 </div>
               </div>
 
-
               {/* Tutor */}
               <div className="space-y-2">
                 <Label>Tutor</Label>
                 <div className="relative">
                   <CustomDropdown
-                    options={["Mohamed Yusuf Deen", "Sivaguru", "Others"]}
+                    options={availableTutors.map((tutor) => tutor.full_name)}
                     value={formData.tutor}
-                    onSelect={(value) => setFormData({ ...formData, tutor: value })}
+                    onSelect={(value) => {
+                      const selectedTutor = availableTutors.find((t) => t.full_name === value);
+                      setFormData({
+                        ...formData,
+                        tutor: selectedTutor ? selectedTutor.full_name : "",
+                        tutor_id: selectedTutor ? selectedTutor.tutor_id : null,
+                      });
+                    }}
                   />
+
                   {errors.tutor && (
                     <p className="text-red-500 text-sm mt-1">{errors.tutor}</p>
                   )}
                 </div>
               </div>
-
-
             </div>
 
             {/* Heading design */}
@@ -763,8 +925,8 @@ export default function StudentAddForm() {
                   <p className="text-red-500 text-sm mt-1">{errors.aadhar_card}</p>
                 )}
               </div>
-                  </div>
-                  
+            </div>
+
             <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
               <div className="space-y-6">
                 <Label> SSLC Marksheet</Label>
@@ -803,8 +965,6 @@ export default function StudentAddForm() {
   );
 }
 
-// DROPDOWN COMPONENT
-
 type CustomDropdownProps<T extends string> = {
   label?: string;
   options: T[];
@@ -812,7 +972,6 @@ type CustomDropdownProps<T extends string> = {
   onSelect?: (value: T) => void;
   className?: string; // optional comment if desired
 };
-
 
 export function CustomDropdown<T extends string>({
   label = "Select",
@@ -872,9 +1031,9 @@ export function CustomDropdown<T extends string>({
   );
 }
 
-
 import { useCallback } from "react";
 import { Trash2 } from "lucide-react";
+
 
 function FileUploadBox({ onFileSelect }: { onFileSelect: (file: File | null) => void }) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);

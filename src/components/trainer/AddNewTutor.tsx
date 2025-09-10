@@ -1,6 +1,4 @@
-import {
-    faChevronDown
-} from "@fortawesome/free-solid-svg-icons";
+import {faChevronDown} from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useDropzone } from "react-dropzone";
@@ -26,6 +24,11 @@ type FormDataType = {
 };
 
 export default function AddNewTutor() {
+
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [courses, setCourses] = useState<string[]>([]);
+
+
     const [formData, setFormData] = useState<FormDataType>({
         first_name: "",
         last_name: "",
@@ -37,8 +40,6 @@ export default function AddNewTutor() {
         experience_years: "",
         joining_date: "",
     });
-
-    
 
     const [documents, setDocuments] = useState<{ tutor_image: File | null }>({
         tutor_image: null,
@@ -84,6 +85,8 @@ export default function AddNewTutor() {
         }
 
         try {
+            setIsSubmitting(true);
+
             const data = new FormData();
             data.append("first_name", formData.first_name.trim());
             data.append("last_name", formData.last_name.trim());
@@ -98,14 +101,6 @@ export default function AddNewTutor() {
                 data.append("tutor_image", documents.tutor_image);
             }
 
-            for (let pair of data.entries()) {
-                console.log(
-                    pair[0] +
-                    ": " +
-                    (pair[1] instanceof File ? pair[1].name : pair[1])
-                );
-            }
-
             const res = await fetch(
                 "https://nystai-backend.onrender.com/NystaiTutors/addtutor",
                 {
@@ -114,25 +109,34 @@ export default function AddNewTutor() {
                 }
             );
 
-            if (!res.ok) {
-                const errorResponse = await res.json().catch(() => ({}));
-                console.error("Backend error response:", errorResponse);
+            const responseData = await res.json().catch(() => ({}));
 
-                if (errorResponse.errors && Array.isArray(errorResponse.errors)) {
-                    errorResponse.errors.forEach((err: any) => {
+            if (!res.ok) {
+                console.error("Backend error response:", responseData);
+
+                // ✅ Handle backend "fields" errors
+                if (responseData.fields) {
+                    Object.entries(responseData.fields).forEach(([field, info]: any) => {
+                        if (info?.success === false && info?.msg) {
+                            toast.error(`${field}: ${info.msg}`);
+                        }
+                    });
+                } else if (responseData.errors && Array.isArray(responseData.errors)) {
+                    responseData.errors.forEach((err: any) => {
                         toast.error(err.msg || JSON.stringify(err));
                     });
                 } else {
                     toast.error(
-                        `Error: ${errorResponse.message || "Failed to add tutor"
-                        }`
+                        responseData.message || "Failed to add tutor. Please try again."
                     );
                 }
                 return;
             }
 
+
             toast.success("Tutor added successfully!");
 
+            // reset form
             setFormData({
                 first_name: "",
                 last_name: "",
@@ -146,9 +150,11 @@ export default function AddNewTutor() {
             });
             setDocuments({ tutor_image: null });
             setErrors({});
-        } catch (error) {
-            console.error(error);
-            toast.error("Something went wrong while adding tutor.");
+        } catch (error: any) {
+            console.error("Network or unexpected error:", error);
+            toast.error(error.message || "Something went wrong while adding tutor.");
+        } finally {
+            setIsSubmitting(false);
         }
     }
 
@@ -158,6 +164,25 @@ export default function AddNewTutor() {
         const day = String(date.getDate()).padStart(2, "0");
         return `${year}-${month}-${day}`;
     }
+
+    useEffect(() => {
+        const fetchCourses = async () => {
+            try {
+                const res = await fetch(
+                    "https://nystai-backend.onrender.com/Allcourses/get-all-courses"
+                );
+                const data = await res.json();
+                if (data.success && Array.isArray(data.data)) {
+                    // extract course_name only
+                    setCourses(data.data.map((course: any) => course.course_name));
+                }
+            } catch (error) {
+                console.error("Error fetching courses:", error);
+            }
+        };
+
+        fetchCourses();
+    }, []);
 
     return (
         <>
@@ -177,7 +202,6 @@ export default function AddNewTutor() {
                         <h2 className="text-xl font-semibold text-gray-800 dark:text-white/90">
                             Add New Tutor
                         </h2>
-
                         {/* Form Grid 1 */}
                         <div className="grid grid-cols-1 gap-6 xl:grid-cols-4">
                             <div className="space-y-6">
@@ -187,8 +211,8 @@ export default function AddNewTutor() {
                                         placeholder="John"
                                         type="text"
                                         className={`${errors.first_name
-                                                ? "border border-red-500"
-                                                : ""
+                                            ? "border border-red-500"
+                                            : ""
                                             }`}
                                         value={formData.first_name}
                                         onChange={(e) => {
@@ -218,8 +242,8 @@ export default function AddNewTutor() {
                                         placeholder="Doe"
                                         type="text"
                                         className={`${errors.last_name
-                                                ? "border border-red-500"
-                                                : ""
+                                            ? "border border-red-500"
+                                            : ""
                                             }`}
                                         value={formData.last_name}
                                         onChange={(e) => {
@@ -308,8 +332,8 @@ export default function AddNewTutor() {
                                     placeholder="info@gmail.com"
                                     type="email"
                                     className={`${errors.email
-                                            ? "border border-red-500"
-                                            : ""
+                                        ? "border border-red-500"
+                                        : ""
                                         }`}
                                     value={formData.email}
                                     onChange={(e) =>
@@ -332,8 +356,8 @@ export default function AddNewTutor() {
                                     placeholder="9876543210"
                                     type="tel"
                                     className={`${errors.phone
-                                            ? "border border-red-500"
-                                            : ""
+                                        ? "border border-red-500"
+                                        : ""
                                         }`}
                                     value={formData.phone}
                                     onChange={(e) =>
@@ -353,12 +377,7 @@ export default function AddNewTutor() {
                             <div className="space-y-6">
                                 <Label>Expertise / Courses</Label>
                                 <CustomDropdown
-                                    options={[
-                                        "CCTV",
-                                        "Home Automation",
-                                        "Networking",
-                                        "Other",
-                                    ]}
+                                    options={courses} // ✅ now from API
                                     value={formData.expertise}
                                     onSelect={(value) =>
                                         setFormData((prev) => ({
@@ -368,9 +387,7 @@ export default function AddNewTutor() {
                                     }
                                 />
                                 {errors.expertise && (
-                                    <p className="text-red-500 text-sm mt-1">
-                                        {errors.expertise}
-                                    </p>
+                                    <p className="text-red-500 text-sm mt-1">{errors.expertise}</p>
                                 )}
                             </div>
 
@@ -380,8 +397,8 @@ export default function AddNewTutor() {
                                     placeholder="7 Years"
                                     type="text"
                                     className={`${errors.experience_years
-                                            ? "border border-red-500"
-                                            : ""
+                                        ? "border border-red-500"
+                                        : ""
                                         }`}
                                     value={formData.experience_years}
                                     onChange={(e) =>
@@ -459,9 +476,10 @@ export default function AddNewTutor() {
                             <div className="col-span-full flex justify-center">
                                 <button
                                     onClick={handleSubmit}
-                                    className="flex items-center justify-center px-32 py-3 font-medium text-dark rounded-lg bg-[#F8C723] text-theme-sm hover:bg-brand-600"
+                                    disabled={isSubmitting}
+                                    className="flex items-center justify-center px-32 py-3 font-medium text-dark rounded-lg bg-[#F8C723] text-theme-sm  disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
-                                    ADD TUTOR
+                                    {isSubmitting ? "Adding..." : "ADD TUTOR"}
                                 </button>
                             </div>
                         </div>
@@ -472,7 +490,6 @@ export default function AddNewTutor() {
     );
 }
 
-// DROPDOWN COMPONENT
 type CustomDropdownProps<T extends string> = {
     label?: string;
     options: T[];
@@ -549,17 +566,15 @@ function FileUploadBox({ onFileSelect }: { onFileSelect: (file: File | null) => 
         }
     }, [onFileSelect]);
 
-    const { getRootProps, getInputProps } = useDropzone({
-        onDrop,
-        multiple: false,
-        accept: { "image/*": [] },
-    });
-
     const removeFile = () => {
         setSelectedFile(null);
         onFileSelect(null);
     };
-
+    const { getRootProps, getInputProps, isDragActive } = useDropzone({
+        onDrop,
+        multiple: false,
+        accept: { "image/*": [] },
+    });
     return (
         <div
             {...getRootProps()}
@@ -569,9 +584,11 @@ function FileUploadBox({ onFileSelect }: { onFileSelect: (file: File | null) => 
             {!selectedFile ? (
                 <>
                     <img src={Upload} alt="Upload" className="mx-auto w-16" />
-                    <p className="text-gray-500 dark:text-gray-400">
-                        Drag & drop or click to upload
+                    <p className="text-sm">
+                        {isDragActive ? "Drop Files or" : "Drag & Drop Files or"}{" "}
+                        <span className="font-medium underline text-brand-500">Browse File</span>
                     </p>
+                    <span className="text-sm text-gray-700">Supported: JPEG, PNG, GIF, PDF, MP4, etc.</span>
                 </>
             ) : (
                 <div className="flex items-center justify-between">
@@ -584,14 +601,10 @@ function FileUploadBox({ onFileSelect }: { onFileSelect: (file: File | null) => 
                         <Trash2 size={18} />
                     </button>
                 </div>
-
-
-                    
             )}
         </div>
     );
 }
-
 
 
 

@@ -1,15 +1,18 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router";
-
 import {
-  CalenderIcon,
   ChevronDownIcon,
-  GridIcon,
   HorizontaLDots,
-  PlugInIcon,
-  TableIcon,
-  UserCircleIcon,
+  PlugInIcon
 } from "../icons";
+import {
+  LayoutGrid,
+  Users,
+  BadgeDollarSign,
+  Phone,
+  GraduationCap,
+  BookMarked,
+} from "lucide-react";
 import { useSidebar } from "../context/SidebarContext";
 import SidebarWidget from "./SidebarWidget";
 
@@ -18,15 +21,17 @@ type NavItem = {
   icon: React.ReactNode;
   path?: string;
   subItems?: { name: string; path: string; pro?: boolean; new?: boolean }[];
+  matchPaths?: string[]; // add this property
 };
 
+
 const navItems: NavItem[] = [
-  { icon: <GridIcon />, name: "Overview", path: "/" },
-  { icon: <CalenderIcon />, name: "Courses", path: "/Courses" },
-  { icon: <UserCircleIcon />, name: "Student List", path: "/studentlist" },
-  { icon: <CalenderIcon />, name: "Course Pricing", path: "/Pricing" },
-  { icon: <UserCircleIcon />, name: "Contact", path: "/ContactGrid" },
-  { name: "Trainers / Faculty", icon: <TableIcon />, path: "/Trainers" },
+  { icon: <LayoutGrid />, name: "Overview", path: "/", matchPaths: ["/"] },
+  { icon: <BookMarked />, name: "Courses", path: "/Courses", matchPaths: ["/courses", "/course/"] },
+  { icon: <Users />, name: "Student List", path: "/studentlist", matchPaths: ["/studentlist"] },
+  { icon: <BadgeDollarSign />, name: "Course Pricing", path: "/Pricing", matchPaths: ["/pricing"] },
+  { icon: <Phone />, name: "Contact", path: "/ContactGrid", matchPaths: ["/contactgrid"] },
+  { icon: <GraduationCap />, name: "Trainers / Faculty", path: "/Trainers", matchPaths: ["/trainers"] },
 ];
 
 const othersItems: NavItem[] = [
@@ -40,11 +45,10 @@ const othersItems: NavItem[] = [
   },
 ];
 
-// march 12
-
 const AppSidebar: React.FC = () => { 
   const { isExpanded, isMobileOpen, isHovered, setIsHovered } = useSidebar();
   const location = useLocation();
+  const [activeNav, setActiveNav] = useState<string | null>(null);
 
   const [openSubmenu, setOpenSubmenu] = useState<{
     type: "main" | "Favourite";
@@ -54,7 +58,19 @@ const AppSidebar: React.FC = () => {
   const [subMenuHeight, setSubMenuHeight] = useState<Record<string, number>>({});
   const subMenuRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
-  const isActive = useCallback((path: string) => location.pathname === path, [location.pathname]);
+  const isActive = useCallback(
+    (itemOrPath: NavItem | string) => {
+      const current = location.pathname.toLowerCase();
+
+      if (typeof itemOrPath === "string") {
+        return current.startsWith(itemOrPath.toLowerCase());
+      }
+
+      if (!itemOrPath.matchPaths) return false;
+      return itemOrPath.matchPaths.some((p) => current.startsWith(p.toLowerCase()));
+    },
+    [location.pathname]
+  );
 
   useEffect(() => {
     let submenuMatched = false;
@@ -123,6 +139,10 @@ const AppSidebar: React.FC = () => {
                     ? "menu-item-icon-active"
                     : "menu-item-icon-inactive"
                   }`}
+                style={{
+                  color:
+                    (nav.path && (activeNav === nav.path || isActive(nav.path))) ? "#1B6763" : undefined,
+                }}
               >
                 {nav.icon}
               </span>
@@ -142,23 +162,28 @@ const AppSidebar: React.FC = () => {
             </button>
           ) : (
             nav.path && (
-              <Link
-                to={nav.path}
-                className={`menu-item group ${isActive(nav.path) ? "bg-[#F8C723]" : "menu-item-inactive"
-                  }`}
-              >
-                <span
-                  className={`menu-item-icon-size ${isActive(nav.path)
-                      ? "menu-item-icon-active"
-                      : "menu-item-icon-inactive"
+                <Link
+                  to={nav.path}
+                  onClick={() => setActiveNav(nav.path || null)}
+                  className={`menu-item group ${activeNav === nav.path ? "bg-[#F8C723]" : "menu-item-inactive"
                     }`}
                 >
-                  {nav.icon}
-                </span>
-                {(isExpanded || isHovered || isMobileOpen) && (
-                  <span className="menu-item-text">{nav.name}</span>
-                )}
-              </Link>
+                  <span
+                    className={`menu-item-icon-size ${activeNav === nav.path
+                        ? "menu-item-icon-active"
+                        : "menu-item-icon-inactive"
+                      }`}
+                    style={{
+                      color: activeNav === nav.path || isActive(nav.path) ? "#1B6763" : undefined,
+                    }}
+                  >
+                    {nav.icon}
+                  </span>
+                  {(isExpanded || isHovered || isMobileOpen) && (
+                    <span className="menu-item-text">{nav.name}</span>
+                  )}
+                </Link>
+
             )
           )}
           {nav.subItems && (isExpanded || isHovered || isMobileOpen) && (
@@ -241,14 +266,14 @@ const AppSidebar: React.FC = () => {
             <>
               <img
                 className="dark:hidden"
-                src="/images/logo/Nystai logo svg.svg"
+                src="/images/logo/bgwhite.png"
                 alt="Logo"
                 width={150}
                 height={40}
               />
               <img
                 className="hidden dark:block"
-                src="/images/logo/Nystai logo svg white.svg"
+                src="/images/logo/bgblack.png"
                 alt="Logo"
                 width={150}
                 height={40}
@@ -282,19 +307,6 @@ const AppSidebar: React.FC = () => {
                 </h2>
                 {renderMenuItems(navItems, "main")}
               </div>
-              {/* <div>
-                <h2
-                  className={`mb-4 text-xs uppercase flex leading-[20px] text-gray-400 ${!isExpanded && !isHovered ? "lg:justify-center" : "justify-start"
-                    }`}
-                >
-                  {isExpanded || isHovered || isMobileOpen ? (
-                    "Favourite"
-                  ) : (
-                    <HorizontaLDots />
-                  )}
-                </h2>
-                {renderMenuItems(othersItems, "Favourite")}
-              </div> */}
             </div>
           </nav>
         </div>

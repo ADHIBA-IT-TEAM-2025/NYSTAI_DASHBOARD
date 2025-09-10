@@ -31,6 +31,7 @@ interface FormErrors {
 }
 
 export default function AllCourses() {
+    const [loading, setLoading] = useState(false);
     const { isOpen, openModal, closeModal } = useModal();
     const [courseName, setCourseName] = useState<string>("");
     const [duration, setDuration] = useState<string>("");
@@ -40,9 +41,7 @@ export default function AllCourses() {
     const [errors, setErrors] = useState<FormErrors>({});
 
     const handleSave = async () => {
-        if (!validateForm()) return;
-
-        if (!courseName || !duration || !overview || !selectedFile) {
+        if (!validateForm()) {
             toast.error("Please fill all fields and upload an image.");
             return;
         }
@@ -51,13 +50,20 @@ export default function AllCourses() {
         formData.append("course_name", courseName);
         formData.append("course_duration", duration);
         formData.append("card_overview", overview);
-        formData.append("image_url", selectedFile);
+        if (selectedFile) {
+            formData.append("image_url", selectedFile);
+        }
+
 
         try {
-            const response = await fetch("https://nystai-backend.onrender.com/Allcourses/add", {
-                method: "POST",
-                body: formData,
-            });
+            setLoading(true); // start loading
+            const response = await fetch(
+                "https://nystai-backend.onrender.com/Allcourses/add",
+                {
+                    method: "POST",
+                    body: formData,
+                }
+            );
 
             const result = await response.json();
 
@@ -75,6 +81,8 @@ export default function AllCourses() {
         } catch (error) {
             console.error("Error adding course:", error);
             toast.error("Failed to add course.");
+        } finally {
+            setLoading(false); // stop loading
         }
     };
 
@@ -194,6 +202,8 @@ export default function AllCourses() {
                                             placeholder="System Integration Program"
                                             value={courseName}
                                             onChange={(e) => setCourseName(e.target.value)}
+                                            minLength={3}
+                                            maxLength={20}
                                         />
                                         {errors.courseName && <p className="text-red-500 text-sm">{errors.courseName}</p>}
                                     </div>
@@ -234,9 +244,13 @@ export default function AllCourses() {
                                 <button
                                     type="button"
                                     onClick={handleSave}
-                                    className="flex items-center gap-2 rounded-2xl border border-gray-300 bg-[#F8C723] px-20 py-2 text-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 hover:text-gray-800"
+                                    disabled={loading} // disable button while loading
+                                    className={`flex items-center gap-2 rounded-2xl border border-gray-300 px-20 py-2 text-sm font-medium shadow-theme-xs ${loading
+                                            ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                                            : "bg-[#F8C723] text-gray-700 hover:bg-gray-50 hover:text-gray-800"
+                                        }`}
                                 >
-                                    Add New Course
+                                    {loading ? "Adding..." : "Add New Course"}
                                 </button>
                             </div>
                         </form>

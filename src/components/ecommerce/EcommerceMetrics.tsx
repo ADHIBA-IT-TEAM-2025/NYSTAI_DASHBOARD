@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { Link } from "react-router-dom";
-import { ArrowUp, Users, Package } from "lucide-react";
+import { ArrowUp, GraduationCap, BookOpen, BookCheck, UserPlus } from "lucide-react";
 import Badge from "../ui/badge/Badge";
 
 export default function EcommerceMetrics() {
@@ -36,11 +36,11 @@ export default function EcommerceMetrics() {
   }, []);
 
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-4 md:gap-6">
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4 md:gap-6">
       {/* Total Student */}
       <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] md:p-6">
         <div className="flex items-center justify-center w-12 h-12 bg-gray-100 rounded-xl dark:bg-gray-800">
-          <Users className="text-gray-800 size-6 dark:text-white/90" />
+          <GraduationCap className="text-gray-800 size-6 dark:text-white/90" />
         </div>
 
         <div className="flex items-end justify-between mt-5">
@@ -63,7 +63,7 @@ export default function EcommerceMetrics() {
       {/* Course Completed */}
       <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] md:p-6">
         <div className="flex items-center justify-center w-12 h-12 bg-gray-100 rounded-xl dark:bg-gray-800">
-          <Users className="text-gray-800 size-6 dark:text-white/90" />
+          <BookCheck className="text-gray-800 size-6 dark:text-white/90" />
         </div>
         <div className="flex items-end justify-between mt-5">
           <div>
@@ -83,7 +83,7 @@ export default function EcommerceMetrics() {
       <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] md:p-6">
         <Link to="/AddStudentForm">
           <div className="flex items-center justify-center w-12 h-12 bg-gray-100 rounded-xl dark:bg-gray-800">
-            <Package className="text-gray-800 size-6 dark:text-white/90" />
+            <UserPlus className="text-gray-800 size-6 dark:text-white/90" />
           </div>
           <div className="flex items-end justify-between mt-5">
             <div>
@@ -116,16 +116,19 @@ function CourseCard() {
   return (
     <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] md:p-6">
       <div className="flex items-center justify-center w-12 h-12 bg-gray-100 rounded-xl dark:bg-gray-800">
-        <Package className="text-gray-800 size-6 dark:text-white/90" />
+        <BookOpen className="text-gray-800 size-6 dark:text-white/90" />
       </div>
 
-      <div className="flex items-center justify-between mt-5">
-        <span className="text-sm text-gray-500 dark:text-gray-400">{selectedCourse}</span>
+      <div className="flex items-center justify-between mt-4">
+        <span className="text-sm text-gray-500 dark:text-gray-400"> <UserDropdown selectedCourse={selectedCourse} setSelectedCourse={setSelectedCourse} /></span>
       </div>
 
-      <div className="flex items-center justify-between">
+      <div className="flex items-end justify-between">
         <h4 className="mt-2 font-bold text-gray-800 text-title-sm dark:text-white/90">{count}</h4>
-        <UserDropdown selectedCourse={selectedCourse} setSelectedCourse={setSelectedCourse} />
+        <Badge color="success">
+          <ArrowUp className="w-4 h-4" />
+          1.8%
+        </Badge>
       </div>
     </div>
   );
@@ -138,15 +141,36 @@ interface UserDropdownProps {
 
 function UserDropdown({ selectedCourse, setSelectedCourse }: UserDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const courses = ["IOT", "CCTV"];
+  const [courses, setCourses] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchCourses = async () => {
+      try {
+        const response = await axios.get("https://nystai-backend.onrender.com/Allcourses/get-all-courses");
+        // Extract the course_name field from the response
+        const courseList = response.data.data.map((c: any) => c.course_name);
+        setCourses(courseList);
+      } catch (error) {
+        console.error("Error fetching courses:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCourses();
+  }, []);
+
 
   return (
     <div className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 rounded-2xl border border-gray-300 bg-[#F8C723] px-4 py-1 text-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 hover:text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/[0.03] dark:hover:text-gray-200"
+        className="flex items-center gap-2 rounded-2xl border border-gray-300 bg-[#F8C723] px-3 py-1 text-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 hover:text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/[0.03] dark:hover:text-gray-200"
       >
-        <span className="block mr-1 font-medium text-theme-sm">{selectedCourse}</span>
+        <span className="block mr-1 font-medium text-sm">
+          {loading ? "Loading..." : selectedCourse || "Select Course"}
+        </span>
         <svg
           className={`stroke-gray-500 dark:stroke-gray-400 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
           width="18"
@@ -165,22 +189,31 @@ function UserDropdown({ selectedCourse, setSelectedCourse }: UserDropdownProps) 
         </svg>
       </button>
 
-      {isOpen && (
-        <ul className="absolute right-0 mt-[5px] w-[120px] rounded-2xl border border-gray-200 bg-white p-2 shadow-lg dark:border-gray-800 dark:bg-gray-900">
-          {courses.map((course) => (
-            <li
-              key={course}
-              onClick={() => {
-                setSelectedCourse(course);
-                setIsOpen(false);
-              }}
-              className="px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 cursor-pointer text-sm text-gray-700 dark:text-gray-400"
-            >
-              {course}
+      {isOpen && !loading && (
+        <ul className="absolute right-0 mt-[5px] w-[160px] rounded-2xl border border-gray-200 bg-white p-2 shadow-lg dark:border-gray-800 dark:bg-gray-900 z-50">
+          {courses.length > 0 ? (
+            courses.map((course) => (
+              <li
+                key={course}
+                onClick={() => {
+                  setSelectedCourse(course);
+                  setIsOpen(false);
+                }}
+                className="px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 cursor-pointer text-sm text-gray-700 dark:text-gray-400"
+              >
+                {course}
+              </li>
+
+            ))
+          ) : (
+            <li className="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">
+              No courses found
             </li>
-          ))}
+          )}
         </ul>
       )}
     </div>
   );
 }
+
+

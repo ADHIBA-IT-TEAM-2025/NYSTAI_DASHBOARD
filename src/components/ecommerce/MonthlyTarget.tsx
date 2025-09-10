@@ -20,7 +20,7 @@ export default function MonthlyTarget() {
             (item: { course: string; student_count: number }, idx: number) => ({
               id: idx,
               value: item.student_count,
-              label: item.course, // ✅ use course name as label
+              label: item.course,
               color: colors[idx % colors.length],
             })
           );
@@ -41,33 +41,36 @@ export default function MonthlyTarget() {
     <div className="rounded-2xl border border-gray-200 bg-gray-100 dark:border-gray-800 dark:bg-white/[0.03]">
       <div className="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03] px-5 p-5">
         {/* Header */}
-        <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90 mb-2 ">
+        <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90 mb-4">
           Traffic by Courses
         </h3>
 
-        {/* Pie Chart */}
-        <div className="flex justify-center items-center py-3">
-          {data.length > 0 ? (
-            <PieChart
-              width={300}
-              height={300}
-              series={[
-                {
-                  data,
-                  innerRadius: 50,
-                  outerRadius: 100,
-                  paddingAngle: 5,
-                  cornerRadius: 5,
-                  startAngle: -60,
-                  endAngle: 300,
-                  cx: 150,
-                  cy: 150,
-                },
-              ]}
-            />
-          ) : (
-            <p className="text-gray-500 text-sm">Loading chart...</p>
-          )}
+        {/* Chart + List */}
+        <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
+          {/* Pie Chart */}
+          <div className="flex justify-center">
+            {data.length > 0 ? (
+              <PieChart
+                width={300}
+                height={300}
+                series={[
+                  {
+                    data,
+                    innerRadius: 50,
+                    outerRadius: 100,
+                    paddingAngle: 5,
+                    cornerRadius: 5,
+                    startAngle: -60,
+                    endAngle: 300,
+                    cx: 150,
+                    cy: 150,
+                  },
+                ]}
+              />
+            ) : (
+              <p className="text-gray-500 text-sm">Loading PieChart...</p>
+            )}
+          </div>
         </div>
       </div>
     </div>

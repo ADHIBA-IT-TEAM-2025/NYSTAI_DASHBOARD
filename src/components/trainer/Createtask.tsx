@@ -12,7 +12,6 @@ import { Trash2, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Modal } from "../ui/modal/index.tsx";
 
-// ---------------- Create Task Page ----------------
 export default function Createtask() {
     const [formData, setFormData] = useState({
         batch: "",
@@ -195,7 +194,6 @@ export default function Createtask() {
     );
 }
 
-// ---------------- Showtask Component ----------------
 interface Task {
     _id: string;
     batch: string;
@@ -247,8 +245,11 @@ function Showtask() {
         setTaskToDelete(null);
     };
 
+    const [deleteLoading, setDeleteLoading] = useState(false);
+
     const handleDelete = async () => {
         if (!taskToDelete?._id) return;
+        setDeleteLoading(true);
         try {
             const response = await axios.delete(
                 `https://nystai-backend.onrender.com/Students-Tasks/delete-tasks/${taskToDelete._id}`,
@@ -265,9 +266,11 @@ function Showtask() {
             console.error("Delete error:", error.response || error);
             toast.error(error.response?.data?.message || "Failed to delete task");
         } finally {
+            setDeleteLoading(false);
             closeDeleteModal();
         }
     };
+
 
     function truncateWords(text: string, wordLimit: number) {
         const words = text.split(" ");
@@ -333,10 +336,40 @@ function Showtask() {
                         <div className="flex justify-center gap-4">
                             <button
                                 onClick={handleDelete}
-                                className="flex items-center gap-2 rounded-2xl border border-gray-300 bg-[#F8C723] px-10 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-gray-800"
+                                disabled={deleteLoading}
+                                className={`flex items-center gap-2 rounded-2xl border border-gray-300 px-10 py-2 text-sm font-medium 
+    ${deleteLoading ? "bg-gray-300 text-gray-500 cursor-not-allowed" : "bg-[#F8C723] text-gray-700 hover:bg-gray-50 hover:text-gray-800"}`}
                             >
-                                Yes, Delete Task
+                                {deleteLoading ? (
+                                    <>
+                                        <svg
+                                            className="animate-spin h-4 w-4 text-gray-600"
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            fill="none"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <circle
+                                                className="opacity-25"
+                                                cx="12"
+                                                cy="12"
+                                                r="10"
+                                                stroke="currentColor"
+                                                strokeWidth="4"
+                                            ></circle>
+                                            <path
+                                                className="opacity-75"
+                                                fill="currentColor"
+                                                d="M4 12a8 8 0 018-8v8H4z"
+                                            ></path>
+                                        </svg>
+                                        Deleting...
+                                    </>
+                                ) : (
+                                    "Yes, Delete Task"
+                                )}
                             </button>
+
+
                             <button
                                 onClick={closeDeleteModal}
                                 className="px-4 py-2 rounded-2xl border border-[#F8C723] text-gray-800"
@@ -351,7 +384,6 @@ function Showtask() {
     );
 }
 
-// ---------------- CustomDropdown Component ----------------
 type CustomDropdownProps<T extends string> = {
     label?: string;
     options: T[];

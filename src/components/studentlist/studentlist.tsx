@@ -12,8 +12,6 @@ import axios from "axios";
 import { Link } from "react-router";
 import { Modal } from "../ui/modal";
 import toast from "react-hot-toast";
-import { Dropdown } from "../../components/ui/dropdown/Dropdown";
-import { DropdownItem } from "../../components/ui/dropdown/DropdownItem";
 
 type Student = {
   student_id: number;
@@ -40,12 +38,27 @@ function FilterDropdown({
   onSelect: (value: string | null) => void;
 }) {
   const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const toggleDropdown = () => setIsOpen(!isOpen);
   const closeDropdown = () => setIsOpen(false);
 
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        closeDropdown();
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
   return (
-    <div className="relative">
+    <div className="relative" ref={dropdownRef}>
       <button
         onClick={toggleDropdown}
         className="flex items-center gap-2 rounded-2xl border border-gray-300 bg-[#F8C723] px-4 py-2 text-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 hover:text-gray-800"
@@ -71,38 +84,38 @@ function FilterDropdown({
         </svg>
       </button>
 
-      <Dropdown
-        isOpen={isOpen}
-        onClose={closeDropdown}
-        className="absolute right-0 mt-[17px] flex w-[220px] flex-col rounded-2xl border border-gray-200 bg-white p-3 shadow-theme-lg"
-      >
-        <ul className="flex flex-col gap-1">
-          <li>
-            <DropdownItem
-              onItemClick={() => {
-                onSelect(null);
-                closeDropdown();
-              }}
-              className="px-3 py-2 font-medium text-gray-700 rounded-lg hover:bg-gray-100"
-            >
-              All {label}
-            </DropdownItem>
-          </li>
-          {options.map((opt) => (
-            <li key={opt}>
-              <DropdownItem
-                onItemClick={() => {
-                  onSelect(opt);
+      {isOpen && (
+        <div
+          className="absolute right-0 mt-[17px] w-[220px] flex flex-col rounded-2xl border border-gray-200 bg-white p-3 shadow-theme-lg z-50"
+        >
+          <ul className="flex flex-col gap-1">
+            <li>
+              <button
+                onClick={() => {
+                  onSelect(null);
                   closeDropdown();
                 }}
-                className="px-3 py-2 font-medium text-gray-700 rounded-lg hover:bg-gray-100"
+                className="px-3 py-2 font-medium text-gray-700 rounded-lg hover:bg-gray-100 text-left"
               >
-                {opt}
-              </DropdownItem>
+                All {label}
+              </button>
             </li>
-          ))}
-        </ul>
-      </Dropdown>
+            {options.map((opt) => (
+              <li key={opt}>
+                <button
+                  onClick={() => {
+                    onSelect(opt);
+                    closeDropdown();
+                  }}
+                  className="px-3 py-2 font-medium text-gray-700 rounded-lg hover:bg-gray-100 text-left"
+                >
+                  {opt}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 }
@@ -143,8 +156,6 @@ export default function BasicTableOne() {
         setLoading(false);
       });
   }, []);
-
-  if (loading) return <p className="p-4">Loading students...</p>;
 
   const filteredStudents = students.filter((s) => {
     const courseMatch = selectedCourse
@@ -217,7 +228,7 @@ export default function BasicTableOne() {
         </div>
       </div>
 
-      <div className="relative overflow-hidden rounded-xl border border-gray-200 bg-white">
+      <div className="relative overflow-visible rounded-xl border border-gray-200 bg-white">
         <div className="w-full overflow-x-auto">
           <Table className="min-w-[800px]">
             <TableHeader className="border-b border-gray-100">
@@ -247,66 +258,83 @@ export default function BasicTableOne() {
             </TableHeader>
 
             <TableBody className="divide-y divide-gray-100">
-              {filteredStudents.map((student) => (
-                <TableRow key={student.student_id}>
-                  <TableCell className="px-5 py-4 text-start">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 overflow-hidden rounded-full">
-                        <img
-                          width={40}
-                          height={40}
-                          src={student.passport_photo_url}
-                          alt={`${student.name} ${student.last_name}`}
-                        />
-                      </div>
-                      <div>
-                        <span className="block font-medium text-gray-800">
-                          {student.name} {student.last_name}
-                        </span>
-                        <span className="block text-gray-500 text-xs">
-                          Student
-                        </span>
-                      </div>
+              {loading ? (
+                <TableRow>
+                 <TableCell colSpan={7} className="h-48">
+                    <div className="flex items-center justify-center h-full">
+                      <p className="text-gray-500 text-sm">Loading students...</p>
                     </div>
                   </TableCell>
-                  <TableCell className="px-4 py-3 text-gray-500 text-start">
-                    {student.course_enrolled}
-                  </TableCell>
-                  <TableCell className="px-4 py-3 text-gray-500">
-                    {new Date(student.join_date).toLocaleDateString()} -{" "}
-                    {new Date(student.end_date).toLocaleDateString()}
-                  </TableCell>
-                  <TableCell className="px-4 py-3 text-gray-500">
-                    {student.course_duration}
-                  </TableCell>
-                  <TableCell className="px-4 py-3 text-gray-500 text-start">
-                    {student.tutor}
-                  </TableCell>
-                  <TableCell className="px-4 py-3 text-gray-500 text-start">
-                    <Badge
-                      size="sm"
-                      color={
-                        student.certificate_status === "Issued"
-                          ? "success"
-                          : student.certificate_status === "Pending"
-                            ? "warning"
-                            : "error"
-                      }
-                    >
-                      {student.certificate_status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="px-4 py-3 text-gray-500 text-start">
-                    <div className="flex items-center justify-between">
-                      <ActionDropdown
-                        onEdit={() => console.log("Edit", student.student_id)}
-                        onDelete={() => openDeleteModal(student.student_id)}
-                        studentId={student.student_id}
-                      />
+
+                </TableRow>
+              ) : filteredStudents.length > 0 ? (
+                filteredStudents.map((student) => (
+                  <TableRow key={student.student_id}>
+                    <TableCell className="px-5 py-4 text-start">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 overflow-hidden rounded-full">
+                          <img
+                            width={40}
+                            height={40}
+                            src={student.passport_photo_url}
+                            alt={`${student.name} ${student.last_name}`}
+                          />
+                        </div>
+                        <div>
+                          <span className="block font-medium text-gray-800">
+                            {student.name} {student.last_name}
+                          </span>
+                          <span className="block text-gray-500 text-xs">Student</span>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell className="px-4 py-3 text-gray-500 text-start">
+                      {student.course_enrolled}
+                    </TableCell>
+                    <TableCell className="px-4 py-3 text-gray-500">
+                      {new Date(student.join_date).toLocaleDateString()} -{" "}
+                      {new Date(student.end_date).toLocaleDateString()}
+                    </TableCell>
+                    <TableCell className="px-4 py-3 text-gray-500">
+                      {student.course_duration}
+                    </TableCell>
+                    <TableCell className="px-4 py-3 text-gray-500 text-start">
+                      {student.tutor}
+                    </TableCell>
+                    <TableCell className="px-4 py-3 text-gray-500 text-start">
+                      <Badge
+                        size="sm"
+                        color={
+                          student.certificate_status === "Issued"
+                            ? "success"
+                            : student.certificate_status === "Pending"
+                              ? "warning"
+                              : "error"
+                        }
+                      >
+                        {student.certificate_status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
+                      <div className="flex items-center justify-between">
+                        <ActionDropdown
+                          onEdit={() => console.log("Edit", student.student_id)}
+                          onDelete={() => openDeleteModal(student.student_id)}
+                          studentId={student.student_id}
+                        />
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                 <TableCell colSpan={7} className="h-48">
+                    <div className="flex items-center justify-center h-full">
+                      <p className="text-gray-500 text-sm">No students found</p>
                     </div>
                   </TableCell>
                 </TableRow>
-              ))}
+              )}
             </TableBody>
           </Table>
         </div>
@@ -349,22 +377,27 @@ function ActionDropdown({
   studentId: number;
 }) {
   const [isOpen, setIsOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
+  // Close dropdown when clicking outside
   useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
         setIsOpen(false);
       }
     }
+
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   return (
-    <div className="relative inline-block text-left" ref={menuRef}>
+    <div className="relative inline-block text-left" ref={dropdownRef}>
       <button
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() => setIsOpen((prev) => !prev)} // toggle on click
         className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-white/10"
       >
         <MoreVertical className="w-5 h-5 text-gray-600 dark:text-gray-300" />
@@ -373,16 +406,16 @@ function ActionDropdown({
       {isOpen && (
         <div className="absolute right-0 z-50 mt-2 w-[200px] rounded-2xl border border-gray-200 bg-white p-3 shadow-xl dark:border-gray-800 dark:bg-gray-dark">
           <ul className="flex flex-col gap-1">
-            <Link to={`/Editstudentform/${studentId}`}>
-              <li>
+            <li>
+              <Link to={`/Editstudentform/${studentId}`}>
                 <button
                   onClick={onEdit}
                   className="flex w-full font-normal text-left px-3 py-2 text-gray-500 rounded-lg hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
                 >
                   Edit Details
                 </button>
-              </li>
-            </Link>
+              </Link>
+            </li>
             <li>
               <button
                 onClick={onDelete}
@@ -405,3 +438,7 @@ function ActionDropdown({
     </div>
   );
 }
+
+
+
+

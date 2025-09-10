@@ -39,6 +39,9 @@ interface FormErrors {
 
 export default function AllPricing() {
     const [isAddOpen, setIsAddOpen] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+    const [isUpdateLoading, setIsUpdateLoading] = useState(false);
+    const [isDeleteLoading, setIsDeleteLoading] = useState(false);
     const { isOpen: isEditOpen, openModal: openEditModal, closeModal: closeEditModal } = useModal();
     const [isDeleteOpen, setIsDeleteOpen] = useState(false);
     const [planName, setPlanName] = useState("");
@@ -66,6 +69,7 @@ export default function AllPricing() {
             toast.error("Please fix validation errors before submitting.");
             return;
         }
+
         const sanitizedPlanName = planName.trim().replace(/[^a-zA-Z\s]/g, "");
         const sanitizedAmount = amount.trim().replace(/[^0-9.]/g, "");
 
@@ -75,6 +79,8 @@ export default function AllPricing() {
         }
 
         try {
+            setIsLoading(true); // 🔹 Start loading
+
             const payload = {
                 plan_name: sanitizedPlanName,
                 price: sanitizedAmount,
@@ -108,6 +114,8 @@ export default function AllPricing() {
             } else {
                 toast.error("An unknown error occurred.");
             }
+        } finally {
+            setIsLoading(false); // 🔹 Stop loading
         }
     };
 
@@ -263,7 +271,10 @@ export default function AllPricing() {
             return;
         }
         if (!editingPlan) return;
+
         try {
+            setIsUpdateLoading(true); // 🔹 start loading
+
             const payload = {
                 plan_name: planName,
                 price: amount,
@@ -275,10 +286,12 @@ export default function AllPricing() {
                 point_6: keys[5] || "",
                 point_7: keys[6] || "",
             };
+
             await axios.put(
                 `https://nystai-backend.onrender.com/pricing-plans/update-pricing-plan/${editingPlan.id}`,
                 payload
             );
+
             toast.success("Plan updated successfully!");
             closeEditModal();
             setEditingPlan(null);
@@ -286,21 +299,29 @@ export default function AllPricing() {
         } catch (err) {
             console.error(err);
             toast.error("Failed to update plan");
+        } finally {
+            setIsUpdateLoading(false); // 🔹 stop loading
         }
     };
 
     const handleDelete = async () => {
         if (!planToDelete) return;
+
         try {
+            setIsDeleteLoading(true); // 🔹 start loading
+
             await axios.delete(
                 `https://nystai-backend.onrender.com/pricing-plans/delete-pricing-plan/${planToDelete.id}`
             );
+
             toast.success("Plan deleted successfully!");
             closeDeleteModal();
             fetchPlans();
         } catch (error) {
             console.error(error);
             toast.error("Failed to delete plan");
+        } finally {
+            setIsDeleteLoading(false); // 🔹 stop loading
         }
     };
 
@@ -405,8 +426,9 @@ export default function AllPricing() {
                                     type="submit"
                                     onClick={handleSubmit}
                                     className="flex items-center gap-2 rounded-2xl border border-gray-300 bg-[#F8C723] px-10 py-2 text-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 hover:text-gray-800"
+                                    disabled={isLoading} // 🔹 Disable while loading
                                 >
-                                    Add New Plan
+                                    {isLoading ? "Adding..." : "Add New Plan"}  {/* 🔹 Show loading text */}
                                 </button>
                             </div>
                         </form>
@@ -543,9 +565,11 @@ export default function AllPricing() {
                                 type="submit"
                                 onClick={handleUpdate}
                                 className="flex items-center gap-2 rounded-2xl border border-gray-300 bg-[#F8C723] px-10 py-2 text-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 hover:text-gray-800"
+                                disabled={isUpdateLoading} // 🔹 disable while loading
                             >
-                                Update Plan
+                                {isUpdateLoading ? "Updating..." : "Update Plan"}  {/* 🔹 show loading text */}
                             </button>
+
                         </div>
                     </form>
                 </div>
@@ -562,8 +586,9 @@ export default function AllPricing() {
                             <button
                                 onClick={handleDelete}
                                 className="flex items-center gap-2 rounded-2xl border border-gray-300 bg-[#F8C723] px-10 py-2 text-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 hover:text-gray-800"
+                                disabled={isDeleteLoading} // 🔹 disable while loading
                             >
-                                Yes, Delete Plan
+                                {isDeleteLoading ? "Deleting..." : "Yes, Delete Plan"}  {/* 🔹 show loading text */}
                             </button>
                             <button
                                 onClick={closeDeleteModal}
