@@ -34,9 +34,12 @@ import Blank from "./pages/Blank";
 import Studentcertification from "./components/studentlist/CertificateStatus";
 import StudentEditForm from "./components/form/editstudentform/editstudentform.tsx";
 import ProtectedRoute from "./ProtectedRoute.tsx";
-
+// import { Provider } from "react-redux";
+import Studentpdfdownload from "./components/studentpdfdownload/pdfdownload.tsx";
+// import { store } from "./redux/store"; 
 export default function App() {
   return (
+    // <Provider store={store}>
     <>
       <Toaster position="bottom-center" reverseOrder={false} />
       <Router>
@@ -76,20 +79,18 @@ export default function App() {
             <Route path="/videos" element={<Videos />} />
             <Route path="/line-chart" element={<LineChart />} />
             <Route path="/bar-chart" element={<BarChart />} />
+            <Route path="/Student-PDF/:id" element={<Studentpdfdownload />} />
           </Route>
 
           {/* Public Routes */}
           <Route path="/signin" element={<SignIn />} />
-          {/* Student Assignment Page (outside AppLayout) */}
-          <Route
-            path="/Students-Tasks/assignment/:token/:studentId?"
-            element={<StudentAssignment />}
-          />
+          <Route path="/Students-Tasks/assignment/:token/:studentId?" element={<StudentAssignment />} />
           <Route path="/student/login" element={<StudentLogin />} />
           <Route path="/student/certificate" element={<Certificate />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Router>
     </>
+    // </Provider>
   );
 }
