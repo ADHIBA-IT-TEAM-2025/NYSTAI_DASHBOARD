@@ -24,7 +24,6 @@ type NavItem = {
   matchPaths?: string[]; // add this property
 };
 
-
 const navItems: NavItem[] = [
   { icon: <LayoutGrid />, name: "Overview", path: "/", matchPaths: ["/"] },
   { icon: <BookMarked />, name: "Courses", path: "/Courses", matchPaths: ["/courses", "/course/"] },
