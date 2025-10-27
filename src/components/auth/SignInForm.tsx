@@ -54,13 +54,13 @@ export default function SignInForm() {
       style={{ backgroundImage: "url('/images/logo/loginimg.jpg')" }}
     >
       <div className="w-full max-w-md bg-white/70 dark:bg-gray-900/80 p-8 rounded-xl shadow-lg backdrop-blur-md">
-        <Link
+        {/* <Link
           to="/"
           className="inline-flex items-center text-sm text-gray-500 transition-colors hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 mb-6"
         >
           <ChevronLeftIcon className="size-5" />
           Back to dashboard
-        </Link>
+        </Link> */}
 
         <div className="mb-5 sm:mb-8 text-center">
           <h1 className="mb-2 font-semibold text-gray-800 text-title-sm dark:text-white/90 sm:text-title-md">

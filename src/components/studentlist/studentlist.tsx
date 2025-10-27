@@ -260,7 +260,7 @@ export default function BasicTableOne() {
             <TableBody className="divide-y divide-gray-100">
               {loading ? (
                 <TableRow>
-                 <TableCell colSpan={7} className="h-48">
+                  <TableCell colSpan={7} className="h-48">
                     <div className="flex items-center justify-center h-full">
                       <p className="text-gray-500 text-sm">Loading students...</p>
                     </div>
@@ -328,7 +328,7 @@ export default function BasicTableOne() {
                 ))
               ) : (
                 <TableRow>
-                 <TableCell colSpan={7} className="h-48">
+                  <TableCell colSpan={7} className="h-48">
                     <div className="flex items-center justify-center h-full">
                       <p className="text-gray-500 text-sm">No students found</p>
                     </div>
@@ -430,6 +430,14 @@ function ActionDropdown({
                 className="flex w-full font-normal text-left px-3 py-2 text-gray-500 rounded-lg hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
               >
                 Certificate Status
+              </Link>
+            </li>
+            <li>
+              <Link
+                to={`/Student-PDF/${studentId}`}
+                className="flex w-full font-normal text-left px-3 py-2 text-gray-500 rounded-lg hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
+              >
+                PDF View
               </Link>
             </li>
           </ul>

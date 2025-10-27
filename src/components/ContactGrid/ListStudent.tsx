@@ -1,4 +1,4 @@
-import {  Grid , List, MoreVertical, PlusCircleIcon, X} from "lucide-react";
+import { Grid, List, MoreVertical, PlusCircleIcon, X } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import PageBreadcrumb from "../common/PageBreadCrumb";
@@ -65,12 +65,12 @@ export default function ListStudent() {
         }
     };
 
-    
+
     useEffect(() => {
         axios
             .get("https://nystai-backend.onrender.com/get-all-students")
             .then((res) => {
-                 setStudents(res.data.data);
+                setStudents(res.data.data);
                 setLoading(false);
             })
             .catch((err) => {
@@ -259,7 +259,7 @@ function ActionDropdown({
                                 onClick={onEdit}
                                 className="flex w-full font-normal text-left px-3 py-2 text-gray-500 rounded-lg hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
                             >
-                                Edit Details
+                                Edit Detailss
                             </button>
                         </li>
                         <li>
@@ -276,6 +276,14 @@ function ActionDropdown({
                                 className="flex w-full font-normal text-left px-3 py-2 text-gray-500 rounded-lg hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
                             >
                                 Certificate Status
+                            </Link>
+                        </li>
+                        <li>
+                            <Link
+                                to={`/Student-PDF/${studentId}`}
+                                className="flex w-full font-normal text-left px-3 py-2 text-gray-500 rounded-lg hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
+                            >
+                                PDF View
                             </Link>
                         </li>
                     </ul>

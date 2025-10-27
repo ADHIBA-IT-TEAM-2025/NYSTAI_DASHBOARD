@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useModal } from "../../hooks/useModal";
 import { Modal } from "../ui/modal";
 import Input from "../form/input/InputField";
@@ -347,57 +347,6 @@ export default function AllPricing() {
         setIsDeleteOpen(false);
     };
 
-    // slier 
-    const sliderRef = useRef<HTMLDivElement | null>(null);
-
-    useEffect(() => {
-        const slider = sliderRef.current;
-        if (!slider) return;
-
-        let isDown = false;
-        let startX = 0;
-        let scrollLeft = 0;
-
-        const handleMouseDown = (e: MouseEvent) => {
-            isDown = true;
-            slider.classList.add("grabbing");
-            startX = e.pageX - slider.offsetLeft;
-            scrollLeft = slider.scrollLeft;
-        };
-
-        const handleMouseLeave = () => {
-            isDown = false;
-            slider.classList.remove("grabbing");
-        };
-
-        const handleMouseUp = () => {
-            isDown = false;
-            slider.classList.remove("grabbing");
-        };
-
-        const handleMouseMove = (e: MouseEvent) => {
-            if (!isDown) return;
-            e.preventDefault(); // prevent selecting text/images
-            const x = e.pageX - slider.offsetLeft;
-            const walk = (x - startX) * 1.5; // Adjust multiplier for scroll speed
-            slider.scrollLeft = scrollLeft - walk;
-        };
-
-        slider.style.userSelect = "none";
-        slider.addEventListener("mousedown", handleMouseDown);
-        slider.addEventListener("mouseleave", handleMouseLeave);
-        slider.addEventListener("mouseup", handleMouseUp);
-        slider.addEventListener("mousemove", handleMouseMove);
-
-        return () => {
-            slider.removeEventListener("mousedown", handleMouseDown);
-            slider.removeEventListener("mouseleave", handleMouseLeave);
-            slider.removeEventListener("mouseup", handleMouseUp);
-            slider.removeEventListener("mousemove", handleMouseMove);
-        };
-    }, []);
-
-
     return (
         <>
             <PageMeta title="All Pricing - Nystai Institute" description="All available pricing plans" />
@@ -491,12 +440,7 @@ export default function AllPricing() {
                     {loading ? (
                         <p className="text-center p-10">Loading pricing plans...</p>
                     ) : (
-                            <div
-                                ref={sliderRef}
-                                className="flex gap-4 overflow-x-auto no-scrollbar select-none cursor-grab active:cursor-grabbing"
-                            >
-
-
+                        <div className="flex gap-4 overflow-x-auto no-scrollbar">
                             {pricingPlans.length > 0 ? (
                                 pricingPlans.map((plan, index) => (
                                     <div

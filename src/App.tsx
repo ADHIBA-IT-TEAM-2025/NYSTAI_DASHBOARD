@@ -34,59 +34,63 @@ import Blank from "./pages/Blank";
 import Studentcertification from "./components/studentlist/CertificateStatus";
 import StudentEditForm from "./components/form/editstudentform/editstudentform.tsx";
 import ProtectedRoute from "./ProtectedRoute.tsx";
-
-
+// import { Provider } from "react-redux";
+import Studentpdfdownload from "./components/studentpdfdownload/pdfdownload.tsx";
+// import { store } from "./redux/store"; 
 export default function App() {
   return (
-      <>
-        <Toaster position="bottom-center" reverseOrder={false} />
-        <Router>
-          <ScrollToTop />
-          <Routes>
-            {/* Protected Routes (inside AppLayout) */}
-            <Route
-              element={
-                <ProtectedRoute>
-                  <AppLayout />
-                </ProtectedRoute>
-              }
-            >
-              <Route index path="/" element={<Home />} />
-              <Route path="/Courses" element={<AllCourses />} />
-              <Route path="/course/:id" element={<CourseDetail />} />
-              <Route path="/Pricing" element={<AllPricing />} />
-              <Route path="/profile" element={<UserProfiles />} />
-              <Route path="/calendar" element={<Calendar />} />
-              <Route path="/blank" element={<Blank />} />
-              <Route path="/AddStudentForm" element={<FormElements />} />
-              <Route path="/ContactGrid" element={<ContactGrid />} />
-              <Route path="/ListStudent" element={<ListStudent />} />
-              <Route path="/Trainers" element={<ProfileCards />} />
-              <Route path="/AddNewTutor" element={<AddNewTutor />} />
-              <Route path="/Createtask" element={<Createtask />} />
-              <Route path="/tasklist/:taskId" element={<Tasklist />} />
-              <Route path="/task/:taskId/student/:studentId" element={<Taskstatus />} />
-              <Route path="/studentlist" element={<Studentlist />} />
-              <Route path="/student/:id" element={<Studentcertification />} />
-              <Route path="/Editstudentform/:id" element={<StudentEditForm />} />
-              <Route path="/alerts" element={<Alerts />} />
-              <Route path="/avatars" element={<Avatars />} />
-              <Route path="/badge" element={<Badges />} />
-              <Route path="/buttons" element={<Buttons />} />
-              <Route path="/images" element={<Images />} />
-              <Route path="/videos" element={<Videos />} />
-              <Route path="/line-chart" element={<LineChart />} />
-              <Route path="/bar-chart" element={<BarChart />} />
-            </Route>
+    // <Provider store={store}>
+    <>
+      <Toaster position="bottom-center" reverseOrder={false} />
+      <Router>
+        <ScrollToTop />
+        <Routes>
+          {/* Protected Routes (inside AppLayout) */}
+          <Route
+            element={
+              <ProtectedRoute>
+                <AppLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route index path="/" element={<Home />} />
+            <Route path="/Courses" element={<AllCourses />} />
+            <Route path="/course/:id" element={<CourseDetail />} />
+            <Route path="/Pricing" element={<AllPricing />} />
+            <Route path="/profile" element={<UserProfiles />} />
+            <Route path="/calendar" element={<Calendar />} />
+            <Route path="/blank" element={<Blank />} />
+            <Route path="/AddStudentForm" element={<FormElements />} />
+            <Route path="/ContactGrid" element={<ContactGrid />} />
+            <Route path="/ListStudent" element={<ListStudent />} />
+            <Route path="/Trainers" element={<ProfileCards />} />
+            <Route path="/AddNewTutor" element={<AddNewTutor />} />
+            <Route path="/Createtask" element={<Createtask />} />
+            <Route path="/tasklist/:taskId" element={<Tasklist />} />
+            <Route path="/task/:taskId/student/:studentId" element={<Taskstatus />} />
+            <Route path="/studentlist" element={<Studentlist />} />
+            <Route path="/student/:id" element={<Studentcertification />} />
+            <Route path="/Editstudentform/:id" element={<StudentEditForm />} />
+            <Route path="/alerts" element={<Alerts />} />
+            <Route path="/avatars" element={<Avatars />} />
+            <Route path="/badge" element={<Badges />} />
+            <Route path="/buttons" element={<Buttons />} />
+            <Route path="/images" element={<Images />} />
+            <Route path="/videos" element={<Videos />} />
+            <Route path="/line-chart" element={<LineChart />} />
+            <Route path="/bar-chart" element={<BarChart />} />
+            <Route path="/Student-PDF/:id" element={<Studentpdfdownload />} />
+          </Route>
 
-            {/* Public Routes */}
-            <Route path="/signin" element={<SignIn />} />
-            <Route path="/Students-Tasks/assignment/:token/:studentId?" element={<StudentAssignment />} />
-            <Route path="/student/login" element={<StudentLogin />} />
-            <Route path="/student/certificate" element={<Certificate />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </Router>
-      </>
+          {/* Public Routes */}
+          <Route path="/signin" element={<SignIn />} />
+          <Route path="/Students-Tasks/assignment/:token/:studentId?" element={<StudentAssignment />} />
+          <Route path="/student/login" element={<StudentLogin />} />
+          <Route path="/student/certificate" element={<Certificate />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </Router>
+    </>
+    // </Provider>
   );
 }
