@@ -8,6 +8,8 @@ import CourseDetail from "./components/Courses/Coursesdetails";
 import AllPricing from "./components/Pricing/allPricing";
 import UserProfiles from "./pages/UserProfiles";
 import Calendar from "./pages/Calendar";
+
+
 import Studentlist from "./pages/studentlist/studentlist";
 import FormElements from "./pages/Forms/FormElements";
 import ContactGrid from "./components/ContactGrid/ContactGrid";
@@ -36,7 +38,8 @@ import StudentEditForm from "./components/form/editstudentform/editstudentform.t
 import ProtectedRoute from "./ProtectedRoute.tsx";
 // import { Provider } from "react-redux";
 import Studentpdfdownload from "./components/studentpdfdownload/pdfdownload.tsx";
-// import { store } from "./redux/store"; 
+// import { store } from "./redux/store";
+
 
 export default function App() {
   return (
