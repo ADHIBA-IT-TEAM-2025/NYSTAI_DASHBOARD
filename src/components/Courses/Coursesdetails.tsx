@@ -10,17 +10,35 @@ import Label from "../form/Label";
 import Input from "../form/input/InputField";
 
 interface Course {
+    course_id?: string; // from backend (optional if not always sent)
     course_name: string;
-    course_duration: string; // string instead of number
+    course_duration: string;
     card_overview: string;
     image_url?: string;
+    price?: number; // or string depending on your backend
+    point_1?: string;
+    point_2?: string;
+    point_3?: string;
+    point_4?: string;
+    point_5?: string;
+    point_6?: string;
+    point_7?: string;
 }
 
 interface EditErrors {
-    name: string;
-    duration: string;
-    overview: string;
-    image_url: string;
+    course_id?: string;
+    course_name: string;
+    course_duration: string;
+    card_overview: string;
+    image_url?: string;
+    price?: number;
+    point_1?: string;
+    point_2?: string;
+    point_3?: string;
+    point_4?: string;
+    point_5?: string;
+    point_6?: string;
+    point_7?: string;
 }
 
 export default function CourseDetail() {
