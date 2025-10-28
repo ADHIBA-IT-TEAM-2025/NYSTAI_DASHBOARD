@@ -32,6 +32,17 @@ export default function CourseDetail() {
     const [isDeleteOpen, setIsDeleteOpen] = useState(false);
     const [isEditOpen, setIsEditOpen] = useState(false);
     const [editName, setEditName] = useState("");
+    const [editPrice, setEditPrice] = useState("");
+    const [editPoints, setEditPoints] = useState({
+        point_1: "",
+        point_2: "",
+        point_3: "",
+        point_4: "",
+        point_5: "",
+        point_6: "",
+        point_7: "",
+    });
+
     const [editDuration, setEditDuration] = useState("");
     const [editOverview, setEditOverview] = useState("");
     const [editErrors, setEditErrors] = useState<EditErrors>({
@@ -48,18 +59,23 @@ export default function CourseDetail() {
         const fetchCourseDetail = async () => {
             try {
                 const res = await fetch(
-                    `https://nystai-backend.onrender.com/Allcourses/get-course/${id}`
+                    `https://nystai-backend.onrender.com/Allcourses/get-course-with-plan/${id}`
                 );
                 if (!res.ok) {
                     throw new Error("Failed to fetch course");
                 }
                 const result = await res.json();
-                if (result.success && result.data.length > 0) {
-                    setCourse(result.data[0]); // ✅ pick the first course
+                if (result.success && result.data) {
+                    // handle both array and object responses
+                    const courseData = Array.isArray(result.data)
+                        ? result.data[0]
+                        : result.data;
+                    setCourse(courseData);
                 } else {
                     setCourse(null);
                     toast.error("Course not found");
                 }
+
             } catch (error) {
                 console.error("Failed to fetch course detail:", error);
                 toast.error("Failed to fetch course details");
@@ -78,10 +94,20 @@ export default function CourseDetail() {
             setEditDuration(course.course_duration?.toString() || "");
             setEditOverview(course.card_overview || "");
             setEditFile(null);
-            setEditFileUrl(course.image_url || null); // ✅ store old image url
-            setEditErrors({ name: "", duration: "", overview: "", image_url: "" });
+            setEditFileUrl(course.image_url || null);
+            setEditPrice(course.price?.toString() || "");
+            setEditPoints({
+                point_1: course.point_1 || "",
+                point_2: course.point_2 || "",
+                point_3: course.point_3 || "",
+                point_4: course.point_4 || "",
+                point_5: course.point_5 || "",
+                point_6: course.point_6 || "",
+                point_7: course.point_7 || "",
+            });
         }
     }, [course]);
+
 
     const openDeleteModal = () => setIsDeleteOpen(true);
     const closeDeleteModal = () => setIsDeleteOpen(false);
@@ -100,7 +126,7 @@ export default function CourseDetail() {
         try {
             setDeleting(true); // only the button shows loading
             const res = await fetch(
-                `https://nystai-backend.onrender.com/Allcourses/delete-course/${id}`,
+                `https://nystai-backend.onrender.com/Allcourses/delete-course-with-plan/${id}`,
                 { method: "DELETE" }
             );
 
@@ -183,6 +209,12 @@ export default function CourseDetail() {
         formData.append("course_name", editName);
         formData.append("course_duration", editDuration);
         formData.append("card_overview", editOverview);
+        formData.append("price", editPrice);
+
+        // append all non-empty points
+        Object.entries(editPoints).forEach(([key, value]) => {
+            if (value?.trim()) formData.append(key, value);
+        });
 
         if (editFile) {
             formData.append("image_url", editFile);
@@ -190,7 +222,7 @@ export default function CourseDetail() {
 
         try {
             const res = await fetch(
-                `https://nystai-backend.onrender.com/Allcourses/update-courses/${id}`,
+                `https://nystai-backend.onrender.com/Allcourses/update-course-with-plan/${id}`,
                 {
                     method: "PUT",
                     body: formData,
@@ -199,31 +231,34 @@ export default function CourseDetail() {
 
             const data = await res.json();
 
-            if (!res.ok) {
-                toast.error(data.message || "Failed to update course");
+            if (!res.ok || !data.success) {
+                toast.error(data.message || "Failed to update course & plan");
                 setSaving(false);
                 return;
             }
 
-            toast.success("Course updated successfully");
+            toast.success("Course & pricing plan updated successfully");
             closeEditModal();
 
+            // refetch updated data
             const updatedRes = await fetch(
-                `https://nystai-backend.onrender.com/Allcourses/get-course/${id}`
+                `https://nystai-backend.onrender.com/Allcourses/get-course-with-plan/${id}`
             );
-            if (updatedRes.ok) {
-                const updatedResult = await updatedRes.json();
-                if (updatedResult.success && updatedResult.data.length > 0) {
-                    setCourse(updatedResult.data[0]); // ✅ set updated course
-                }
+            const updatedResult = await updatedRes.json();
+            if (updatedResult.success && updatedResult.data) {
+                const updatedData = Array.isArray(updatedResult.data)
+                    ? updatedResult.data[0]
+                    : updatedResult.data;
+                setCourse(updatedData);
             }
         } catch (err) {
             console.error("Update error:", err);
-            toast.error("Something went wrong");
+            toast.error("Something went wrong while saving");
         } finally {
             setSaving(false);
         }
     };
+
 
     return (
         <>
@@ -376,6 +411,31 @@ export default function CourseDetail() {
                                                         </div>
 
                                                         <div className="lg:col-span-2">
+                                                            <Label className="mb-3">Course Price</Label>
+                                                            <Input
+                                                                type="number"
+                                                                placeholder="4999"
+                                                                value={editPrice}
+                                                                onChange={(e) => setEditPrice(e.target.value)}
+                                                            />
+                                                        </div>
+
+                                                        {[1, 2, 3, 4, 5].map((i) => (
+                                                            <div key={i} className="lg:col-span-2">
+                                                                <Label className="mb-3">Point {i}</Label>
+                                                                <Input
+                                                                    type="text"
+                                                                    placeholder={`Point ${i}`}
+                                                                    value={editPoints[`point_${i}`]}
+                                                                    onChange={(e) =>
+                                                                        setEditPoints((prev) => ({ ...prev, [`point_${i}`]: e.target.value }))
+                                                                    }
+                                                                />
+                                                            </div>
+                                                        ))}
+
+
+                                                        <div className="lg:col-span-2">
                                                             <Label className="mb-3">Upload Images</Label>
                                                             <FileUploadBox
                                                                 selectedFile={editFile}
@@ -417,39 +477,57 @@ export default function CourseDetail() {
                         )}
 
                         {/* Course Content */}
-                        <div className="space-y-6">
-                            <div className="grid lg:grid-cols-1 gap-12">
-                                <div className="rounded-2xl overflow-hidden">
-                                    <img
-                                        src={
-                                            course.image_url ||
-                                            "https://via.placeholder.com/800x400?text=No+Image"
-                                        }
-                                        alt="Card image"
-                                        className="w-full h-[350px] object-cover object-center"
-                                    />
-                                    <div className="p-5 flex flex-col justify-between">
-                                        <div className="mb-5">
-                                            <span className="text-xl font-semibold text-gray-700 dark:text-white/90">
-                                                Duration&nbsp;&nbsp;&nbsp;:
-                                            </span>{" "}
-                                            <span className="text-base text-lg text-gray-800 dark:text-gray-300">
-                                                {course.course_duration} Days
-                                            </span>
-                                        </div>
+                                <div className="space-y-6">
+                                    <div className="grid lg:grid-cols-1 gap-12">
+                                        <div className="rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-700">
+                                            <img
+                                                src={course.image_url || "https://via.placeholder.com/800x400?text=No+Image"}
+                                                alt={course.course_name}
+                                                className="w-full h-[350px] object-cover object-center"
+                                            />
+                                            <div className="p-5 flex flex-col gap-4">
+                                                {/* Basic Info */}
+                                                <h2 className="text-2xl font-semibold text-gray-800 dark:text-white/90">
+                                                    {course.course_name}
+                                                </h2>
 
-                                        <div className="mb-5">
-                                            <span className="text-xl font-semibold text-gray-700 dark:text-white/90">
-                                                Overview&nbsp;:
-                                            </span>{" "}
-                                            <span className="text-base text-lg text-gray-600 dark:text-gray-400">
-                                                {course.card_overview}
-                                            </span>
+                                                <p className="text-gray-600 dark:text-gray-400">
+                                                    <span className="font-medium text-gray-800 dark:text-gray-200">
+                                                        Duration:
+                                                    </span>{" "}
+                                                    {course.course_duration} Days
+                                                </p>
+
+                                                <p className="text-gray-600 dark:text-gray-400 whitespace-pre-line">
+                                                    <span className="font-medium text-gray-800 dark:text-gray-200">
+                                                        Overview:
+                                                    </span>{" "}
+                                                    {course.card_overview}
+                                                </p>
+
+                                                {/* Plan Section */}
+                                                <div className="mt-6 border-t pt-4">
+                                                    <h3 className="text-xl font-semibold text-gray-800 dark:text-white/90 mb-2">
+                                                        Pricing Plan
+                                                    </h3>
+                                                    <p className="text-gray-700 dark:text-gray-300">
+                                                        <span className="font-medium">Price:</span> ₹{course.price}
+                                                    </p>
+
+                                                    {/* List all non-null points dynamically */}
+                                                    <ul className="list-disc pl-6 mt-3 space-y-1 text-gray-600 dark:text-gray-400">
+                                                        {Array.from({ length: 7 }, (_, i) => course[`point_${i + 1}`])
+                                                            .filter(Boolean)
+                                                            .map((point, index) => (
+                                                                <li key={index}>{point}</li>
+                                                            ))}
+                                                    </ul>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                        </div>
+
                     </>
                 )}
             </div>

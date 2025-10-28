@@ -33,6 +33,7 @@ interface StudentFormData {
   join_date: string;
   end_date: string;
   course_enrolled: string;
+  course_price?: string;
   batch: string;
   tutor: string;
   tutor_id?: number | null;
@@ -70,6 +71,7 @@ const EditStudentForm: React.FC = () => {
     join_date: "",
     end_date: "",
     course_enrolled: "",
+    course_price: "",
     batch: "",
     tutor: "",
     tutor_id: null,
@@ -110,6 +112,7 @@ const EditStudentForm: React.FC = () => {
           join_date: student.join_date ?? "",
           end_date: student.end_date ?? "",
           course_enrolled: student.course_enrolled ?? "",
+          course_price: student.course_price ?? "",
           batch: student.batch ?? "",
           tutor: student.tutor ?? "",
           pan_card_url: student.pan_card_url ?? "",
@@ -238,7 +241,7 @@ const EditStudentForm: React.FC = () => {
   useEffect(() => {
     const fetchCourses = async () => {
       try {
-        const response = await fetch("https://nystai-backend.onrender.com/Allcourses/get-all-courses");
+        const response = await fetch("https://nystai-backend.onrender.com/Allcourses/all-courses-with-plans");
         const result = await response.json();
         if (result.success) setAvailableCourses(result.data);
       } catch (err) {
@@ -266,7 +269,7 @@ const EditStudentForm: React.FC = () => {
     };
     fetchTutors();
   }, []);
-  
+
   return (
     <>
       <PageMeta
@@ -279,162 +282,162 @@ const EditStudentForm: React.FC = () => {
         pageTitle1="Edit Student Form"
       />
 
-    <div className="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
-      <div className="p-4 border-t border-gray-100 dark:border-gray-800 sm:p-6" >
-        <div className="space-y-6" >
+      <div className="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
+        <div className="p-4 border-t border-gray-100 dark:border-gray-800 sm:p-6" >
+          <div className="space-y-6" >
 
-          <h2
-            className="text-xl font-semibold text-gray-800 dark:text-white/90"
-            x-text="pageName"
-          >
-            Edit Student Form
-          </h2>
+            <h2
+              className="text-xl font-semibold text-gray-800 dark:text-white/90"
+              x-text="pageName"
+            >
+              Edit Student Form
+            </h2>
 
-          <h3 className="text-l font-semibold text-[#202224] dark:text-white/90 py-4">
-            Personal Details
-          </h3>
+            <h3 className="text-l font-semibold text-[#202224] dark:text-white/90 py-4">
+              Personal Details
+            </h3>
 
-          <div className="grid grid-cols-1 gap-6 xl:grid-cols-4">
-            <div className="space-y-6">
-              <div>
-                <Label>First Name</Label>
-                <div className="relative">
-                  <Input
-                    placeholder="John"
-                    type="text"
-                    value={formData.name}
-                    maxLength={20} // restrict to 50 characters
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            <div className="grid grid-cols-1 gap-6 xl:grid-cols-4">
+              <div className="space-y-6">
+                <div>
+                  <Label>First Name</Label>
+                  <div className="relative">
+                    <Input
+                      placeholder="John"
+                      type="text"
+                      value={formData.name}
+                      maxLength={20} // restrict to 50 characters
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     />
                     {errors.name && <p className="text-red-500">{errors.name}</p>}
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <div className="space-y-6">
-              <div>
-                <Label>Last Name</Label>
-                <div className="relative">
-                  <Input placeholder="Doe" type="text" className=""
-                    value={formData.last_name}
-                    onChange={(e) => setFormData({ ...formData, last_name: e.target.value })} />
+              <div className="space-y-6">
+                <div>
+                  <Label>Last Name</Label>
+                  <div className="relative">
+                    <Input placeholder="Doe" type="text" className=""
+                      value={formData.last_name}
+                      onChange={(e) => setFormData({ ...formData, last_name: e.target.value })} />
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <div className="space-y-6">
-              <div>
-                <DatePicker
-                  id="dob"
-                  label="Date Of Birth"
-                  placeholder="Select date of birth"
-                  maxDate={new Date(new Date().setFullYear(new Date().getFullYear() - 21))}
-                  value={
-                    formData.dob && !isNaN(Date.parse(formData.dob))
-                      ? new Date(formData.dob)
-                      : undefined
-                  }
-                  onChange={(date) => {
-                    const selectedDate = Array.isArray(date) ? date[0] : date;
-
-                    if (selectedDate) {
-                      const year = selectedDate.getFullYear();
-                      const month = String(selectedDate.getMonth() + 1).padStart(2, "0");
-                      const day = String(selectedDate.getDate()).padStart(2, "0");
-
-                      setFormData({
-                        ...formData,
-                        dob: `${year}-${month}-${day}`, // ✅ Exact date, no UTC shift
-                      });
-                    } else {
-                      setFormData({
-                        ...formData,
-                        dob: "",
-                      });
+              <div className="space-y-6">
+                <div>
+                  <DatePicker
+                    id="dob"
+                    label="Date Of Birth"
+                    placeholder="Select date of birth"
+                    maxDate={new Date(new Date().setFullYear(new Date().getFullYear() - 21))}
+                    value={
+                      formData.dob && !isNaN(Date.parse(formData.dob))
+                        ? new Date(formData.dob)
+                        : undefined
                     }
-                  }}
-                />
-              </div>
-            </div>
+                    onChange={(date) => {
+                      const selectedDate = Array.isArray(date) ? date[0] : date;
 
-            <div className="space-y-6">
-              <div>
-                <Label>
-                  Gender
-                </Label>
-                <div className="relative">
-                  <CustomDropdown
-                    options={["Male", "Female", "Other"]}
-                    selected={formData.gender as "Male" | "Female" | "Other"}
-                    onSelect={(value) => setFormData({ ...formData, gender: value })}
+                      if (selectedDate) {
+                        const year = selectedDate.getFullYear();
+                        const month = String(selectedDate.getMonth() + 1).padStart(2, "0");
+                        const day = String(selectedDate.getDate()).padStart(2, "0");
+
+                        setFormData({
+                          ...formData,
+                          dob: `${year}-${month}-${day}`, // ✅ Exact date, no UTC shift
+                        });
+                      } else {
+                        setFormData({
+                          ...formData,
+                          dob: "",
+                        });
+                      }
+                    }}
                   />
                 </div>
               </div>
-            </div>
-          </div>
 
-          <div className="grid grid-cols-1 gap-6 xl:grid-cols-4">
-            <div className="space-y-6">
-              <div>
-                <Label>Mail ID</Label>
-                <div className="relative">
-                  <Input placeholder="info@gmail.com" type="email" className=""
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })} />
+              <div className="space-y-6">
+                <div>
+                  <Label>
+                    Gender
+                  </Label>
+                  <div className="relative">
+                    <CustomDropdown
+                      options={["Male", "Female", "Other"]}
+                      selected={formData.gender as "Male" | "Female" | "Other"}
+                      onSelect={(value) => setFormData({ ...formData, gender: value })}
+                    />
+                  </div>
                 </div>
               </div>
             </div>
 
-            <div className="space-y-6">
-              <div>
-                <Label>Phone Number</Label>
-                <div className="relative">
-                  <Input placeholder="9876543210" type="tel" className=""
-                    value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })} />
+            <div className="grid grid-cols-1 gap-6 xl:grid-cols-4">
+              <div className="space-y-6">
+                <div>
+                  <Label>Mail ID</Label>
+                  <div className="relative">
+                    <Input placeholder="info@gmail.com" type="email" className=""
+                      value={formData.email}
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })} />
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-6">
+                <div>
+                  <Label>Phone Number</Label>
+                  <div className="relative">
+                    <Input placeholder="9876543210" type="tel" className=""
+                      value={formData.phone}
+                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })} />
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-6">
+                <div>
+                  <Label>Alternate Phone</Label>
+                  <div className="relative">
+                    <Input placeholder="9876543211" type="tel" className=""
+                      value={formData.alt_phone}
+                      onChange={(e) => setFormData({ ...formData, alt_phone: e.target.value })} />
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-6">
+                <div>
+                  <Label>Aadhar Number</Label>
+                  <div className="relative">
+                    <Input placeholder="XXXX-XXXX-XXXX" type="text" className=""
+                      value={formData.aadhar_number}
+                      onChange={(e) => setFormData({ ...formData, aadhar_number: e.target.value })} />
+                  </div>
                 </div>
               </div>
             </div>
 
-            <div className="space-y-6">
-              <div>
-                <Label>Alternate Phone</Label>
-                <div className="relative">
-                  <Input placeholder="9876543211" type="tel" className=""
-                    value={formData.alt_phone}
-                    onChange={(e) => setFormData({ ...formData, alt_phone: e.target.value })} />
+            <div className="grid grid-cols-1 gap-6 xl:grid-cols-4">
+              <div className="space-y-6">
+                <div>
+                  <Label>PAN Number</Label>
+                  <div className="relative">
+                    <Input placeholder="ABCDE1234F" type="text" className=""
+                      value={formData.pan_number}
+                      onChange={(e) => setFormData({ ...formData, pan_number: e.target.value })} />
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <div className="space-y-6">
-              <div>
-                <Label>Aadhar Number</Label>
-                <div className="relative">
-                  <Input placeholder="XXXX-XXXX-XXXX" type="text" className=""
-                    value={formData.aadhar_number}
-                    onChange={(e) => setFormData({ ...formData, aadhar_number: e.target.value })} />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 gap-6 xl:grid-cols-4">
-            <div className="space-y-6">
-              <div>
-                <Label>PAN Number</Label>
-                <div className="relative">
-                  <Input placeholder="ABCDE1234F" type="text" className=""
-                    value={formData.pan_number}
-                    onChange={(e) => setFormData({ ...formData, pan_number: e.target.value })} />
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-6">
-              <div>
-                <Label>Address</Label>
-                <div className="relative">
+              <div className="space-y-6">
+                <div>
+                  <Label>Address</Label>
+                  <div className="relative">
                     <Input
                       placeholder="123 Street, City"
                       type="text"
@@ -444,25 +447,25 @@ const EditStudentForm: React.FC = () => {
                       maxLength={50}
                     />
 
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <div className="space-y-6">
-              <div>
-                <Label>Pincode</Label>
-                <div className="relative">
-                  <Input placeholder="600001" type="text" className=""
-                    value={formData.pincode}
-                    onChange={(e) => setFormData({ ...formData, pincode: e.target.value })} />
+              <div className="space-y-6">
+                <div>
+                  <Label>Pincode</Label>
+                  <div className="relative">
+                    <Input placeholder="600001" type="text" className=""
+                      value={formData.pincode}
+                      onChange={(e) => setFormData({ ...formData, pincode: e.target.value })} />
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <div className="space-y-6">
-              <div>
-                <Label>State</Label>
-                <div className="relative">
+              <div className="space-y-6">
+                <div>
+                  <Label>State</Label>
+                  <div className="relative">
                     <Input
                       placeholder="Tamil Nadu"
                       type="text"
@@ -472,17 +475,17 @@ const EditStudentForm: React.FC = () => {
                       maxLength={30}
                     />
 
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          <div className="grid grid-cols-1 gap-6 xl:grid-cols-4">
-            {/* Department */}
-            <div className="space-y-6">
-              <div>
-                <Label>Department</Label>
-                <div className="relative">
+            <div className="grid grid-cols-1 gap-6 xl:grid-cols-4">
+              {/* Department */}
+              <div className="space-y-6">
+                <div>
+                  <Label>Department</Label>
+                  <div className="relative">
                     <Input
                       placeholder="Department Name"
                       type="text"
@@ -492,64 +495,64 @@ const EditStudentForm: React.FC = () => {
                       maxLength={30}
                     />
 
+                  </div>
+                </div>
+              </div>
+
+              {/* Course */}
+              <div className="space-y-6">
+                <div>
+                  <Label>Course</Label>
+                  <div className="relative">
+                    <Input
+                      placeholder="Course Name"
+                      type="text"
+                      value={formData.course}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (value.length <= 30) { // limit to 30 characters
+                          setFormData({ ...formData, course: value });
+                        }
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Year Of Passed */}
+              <div className="space-y-6">
+                <div>
+                  <Label>Year Of Passed</Label>
+                  <div className="relative">
+                    <Input placeholder="e.g. 2022" type="text" className=""
+                      value={formData.year_of_passed}
+                      onChange={(e) => setFormData({ ...formData, year_of_passed: e.target.value })} />
+                  </div>
+                </div>
+              </div>
+
+              {/* Experience */}
+              <div className="space-y-6">
+                <div>
+                  <Label>Experience</Label>
+                  <div className="relative">
+                    <Input
+                      placeholder="e.g. 2 years"
+                      type="text"
+                      value={formData.experience}
+                      maxLength={10} // restrict to 10 characters
+                      onChange={(e) => setFormData({ ...formData, experience: e.target.value })}
+                    />
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* Course */}
-            <div className="space-y-6">
-              <div>
-                <Label>Course</Label>
-                <div className="relative">
-                  <Input
-                    placeholder="Course Name"
-                    type="text"
-                    value={formData.course}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      if (value.length <= 30) { // limit to 30 characters
-                        setFormData({ ...formData, course: value });
-                      }
-                    }}
-                  />
-                </div>
-              </div>
-            </div>
+            <h3 className="text-l font-semibold text-[#202224] dark:text-white/90 py-4">
+              Academic & Course Details
+            </h3>
 
-            {/* Year Of Passed */}
-            <div className="space-y-6">
-              <div>
-                <Label>Year Of Passed</Label>
-                <div className="relative">
-                  <Input placeholder="e.g. 2022" type="text" className=""
-                    value={formData.year_of_passed}
-                    onChange={(e) => setFormData({ ...formData, year_of_passed: e.target.value })} />
-                </div>
-              </div>
-            </div>
-
-            {/* Experience */}
-            <div className="space-y-6">
-              <div>
-                <Label>Experience</Label>
-                <div className="relative">
-                  <Input
-                    placeholder="e.g. 2 years"
-                    type="text"
-                    value={formData.experience}
-                    maxLength={10} // restrict to 10 characters
-                    onChange={(e) => setFormData({ ...formData, experience: e.target.value })}
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <h3 className="text-l font-semibold text-[#202224] dark:text-white/90 py-4">
-            Academic & Course Details
-          </h3>
-
-          <div className="grid grid-cols-1 gap-6 xl:grid-cols-4">
+            <div className="grid grid-cols-1 gap-6 xl:grid-cols-4">
               <div className="space-y-6">
                 <div>
                   <Label>Department / Stream</Label>
@@ -591,10 +594,10 @@ const EditStudentForm: React.FC = () => {
               </div>
 
 
-            <div className="space-y-6">
-              <div>
-                <div className="space-y-6">
-                  <div>
+              <div className="space-y-6">
+                <div>
+                  <div className="space-y-6">
+                    <div>
                       <DatePicker
                         id="join-date"
                         label="Join Date"
@@ -626,52 +629,52 @@ const EditStudentForm: React.FC = () => {
                         }}
                       />
 
+                    </div>
                   </div>
+                </div>
+              </div>
+
+              <div className="space-y-6">
+                <div>
+                  <DatePicker
+                    id="end-date"
+                    label="End Date"
+                    placeholder="Select a date"
+                    value={
+                      formData.end_date && !isNaN(Date.parse(formData.end_date))
+                        ? new Date(formData.end_date)
+                        : undefined
+                    }
+                    onChange={(date) => {
+                      const selectedDate = Array.isArray(date) ? date[0] : date;
+
+                      if (selectedDate) {
+                        const year = selectedDate.getFullYear();
+                        const month = String(selectedDate.getMonth() + 1).padStart(2, "0");
+                        const day = String(selectedDate.getDate()).padStart(2, "0");
+
+                        setFormData({
+                          ...formData,
+                          end_date: `${year}-${month}-${day}`,
+                        });
+                      } else {
+                        setFormData({
+                          ...formData,
+                          end_date: "",
+                        });
+                      }
+                    }}
+                  />
                 </div>
               </div>
             </div>
 
-            <div className="space-y-6">
-              <div>
-                <DatePicker
-                  id="end-date"
-                  label="End Date"
-                  placeholder="Select a date"
-                  value={
-                    formData.end_date && !isNaN(Date.parse(formData.end_date))
-                      ? new Date(formData.end_date)
-                      : undefined
-                  }
-                  onChange={(date) => {
-                    const selectedDate = Array.isArray(date) ? date[0] : date;
-
-                    if (selectedDate) {
-                      const year = selectedDate.getFullYear();
-                      const month = String(selectedDate.getMonth() + 1).padStart(2, "0");
-                      const day = String(selectedDate.getDate()).padStart(2, "0");
-
-                      setFormData({
-                        ...formData,
-                        end_date: `${year}-${month}-${day}`,
-                      });
-                    } else {
-                      setFormData({
-                        ...formData,
-                        end_date: "",
-                      });
-                    }
-                  }}
-                />
-              </div>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 gap-6 xl:grid-cols-4">
-            {/* Course Enrolled */}
-            <div className="space-y-6">
-              <div>
-                <Label>Course Enrolled</Label>
-                <div className="relative">
+            <div className="grid grid-cols-1 gap-6 xl:grid-cols-4">
+              {/* Course Enrolled */}
+              <div className="space-y-6">
+                <div>
+                  <Label>Course Enrolled</Label>
+                  <div className="relative">
                     <CustomDropdown
                       options={availableCourses.map((course) => course.course_name)}
                       selected={formData.course_enrolled}   // ✅ use selected, not value
@@ -680,15 +683,31 @@ const EditStudentForm: React.FC = () => {
                       }
                     />
 
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* Batch */}
-            <div className="space-y-6">
-              <div>
-                <Label>Batch</Label>
-                <div className="relative">
+              {/* Course Price (Read Only) */}
+              <div className="space-y-6">
+                <div>
+                  <Label>Course Price</Label>
+                  <div className="relative">
+                    <Input
+                      type="text"
+                      value={formData.course_price || ""}
+                      readOnly
+                      className="bg-gray-100 text-gray-600 cursor-not-allowed"
+                    />
+                  </div>
+                </div>
+              </div>
+
+
+              {/* Batch */}
+              <div className="space-y-6">
+                <div>
+                  <Label>Batch</Label>
+                  <div className="relative">
                     <Input
                       placeholder="e.g. 2022-2023"
                       type="text"
@@ -697,14 +716,14 @@ const EditStudentForm: React.FC = () => {
                       minLength={4}
                       maxLength={1}
                     />
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* Tutor */}
-            <div className="space-y-6">
-              <div>
-                <Label>Tutor</Label>
+              {/* Tutor */}
+              <div className="space-y-6">
+                <div>
+                  <Label>Tutor</Label>
                   <div className="relative">
                     <CustomDropdown
                       options={availableTutors.map((tutor) => tutor.full_name)} // show all tutors
@@ -720,69 +739,69 @@ const EditStudentForm: React.FC = () => {
                     />
                   </div>
 
+                </div>
+              </div>
+            </div>
+            <h3 className="text-l font-semibold text-[#202224] dark:text-white/90 py-4">
+              Upload Documents
+            </h3>
+
+            <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+              <div className="space-y-6">
+                <Label>Pan Card</Label>
+                <FileUploadBox
+                  defaultFile={formData.pan_card_url}
+                  onFileChange={(file) =>
+                    setFormData((prev) => ({ ...prev, pan_card: file }))
+                  }
+                />
+              </div>
+              <div className="space-y-6">
+                <Label>Aadhar Card</Label>
+                <FileUploadBox
+                  defaultFile={formData.aadhar_card_url}
+                  onFileChange={(file) =>
+                    setFormData((prev) => ({ ...prev, aadhar_card: file }))
+                  }
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+              <div className="space-y-6">
+                <Label>SSLC Marksheet</Label>
+                <FileUploadBox
+                  defaultFile={formData.sslc_marksheet_url}
+                  onFileChange={(file) =>
+                    setFormData((prev) => ({ ...prev, sslc_marksheet: file }))
+                  }
+                />
+              </div>
+              <div className="space-y-6">
+                <Label>Passport Size Photo</Label>
+                <FileUploadBox
+                  defaultFile={formData.passport_photo_url}
+                  onFileChange={(file) =>
+                    setFormData((prev) => ({ ...prev, passport_photo: file }))
+                  }
+                />
+              </div>
+            </div>
+
+            <div className="grid xl:grid-cols-2 gap-6">
+              <div className="col-span-full flex justify-center">
+                <button
+                  onClick={handleSubmit}
+                  disabled={loading}
+                  className={`flex items-center justify-center px-32 py-3 font-medium text-dark rounded-lg bg-[#F8C723] text-theme-sm hover:bg-brand-600 ${loading ? "opacity-50 cursor-not-allowed" : ""
+                    }`}
+                >
+                  {loading ? "Updating..." : "UPDATE STUDENT"}
+                </button>
               </div>
             </div>
           </div>
-          <h3 className="text-l font-semibold text-[#202224] dark:text-white/90 py-4">
-            Upload Documents
-          </h3>
-
-          <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
-            <div className="space-y-6">
-              <Label>Pan Card</Label>
-              <FileUploadBox
-                defaultFile={formData.pan_card_url}
-                onFileChange={(file) =>
-                  setFormData((prev) => ({ ...prev, pan_card: file }))
-                }
-              />
-            </div>
-            <div className="space-y-6">
-              <Label>Aadhar Card</Label>
-              <FileUploadBox
-                defaultFile={formData.aadhar_card_url}
-                onFileChange={(file) =>
-                  setFormData((prev) => ({ ...prev, aadhar_card: file }))
-                }
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
-            <div className="space-y-6">
-              <Label>SSLC Marksheet</Label>
-              <FileUploadBox
-                defaultFile={formData.sslc_marksheet_url}
-                onFileChange={(file) =>
-                  setFormData((prev) => ({ ...prev, sslc_marksheet: file }))
-                }
-              />
-            </div>
-            <div className="space-y-6">
-              <Label>Passport Size Photo</Label>
-              <FileUploadBox
-                defaultFile={formData.passport_photo_url}
-                onFileChange={(file) =>
-                  setFormData((prev) => ({ ...prev, passport_photo: file }))
-                }
-              />
-            </div>
-          </div>
-
-          <div className="grid xl:grid-cols-2 gap-6">
-            <div className="col-span-full flex justify-center">
-              <button
-                onClick={handleSubmit}
-                disabled={loading}
-                className={`flex items-center justify-center px-32 py-3 font-medium text-dark rounded-lg bg-[#F8C723] text-theme-sm hover:bg-brand-600 ${loading ? "opacity-50 cursor-not-allowed" : ""
-                  }`}
-              >
-                {loading ? "Updating..." : "UPDATE STUDENT"}
-              </button>
-            </div>
-          </div>
         </div>
-      </div>
       </div>
     </>
   );

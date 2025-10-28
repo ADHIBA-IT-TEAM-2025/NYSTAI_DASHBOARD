@@ -31,6 +31,7 @@ interface StudentFormData {
   join_date: string;
   end_date: string;
   course_enrolled: string;
+  course_price: string;
   batch: string;
   tutor: string;
   tutor_id: number | null; // ✅ number or null
@@ -60,6 +61,7 @@ export default function StudentAddForm() {
     join_date: "",
     end_date: "",
     course_enrolled: "",
+    course_price: "",
     batch: "",
     tutor: "",
     tutor_id: null, // ✅ initial null
@@ -288,12 +290,13 @@ export default function StudentAddForm() {
       setIsSubmitting(false);
     }
   };
+
   const [availableCourses, setAvailableCourses] = useState<{ id: number; course_name: string }[]>([]);
 
   useEffect(() => {
     const fetchCourses = async () => {
       try {
-        const response = await fetch("https://nystai-backend.onrender.com/Allcourses/get-all-courses");
+        const response = await fetch("https://nystai-backend.onrender.com/Allcourses/all-courses-with-plans");
         const result = await response.json();
 
         if (result.success) {
@@ -844,10 +847,18 @@ export default function StudentAddForm() {
                 <div className="relative">
                   <CustomDropdown
                     options={availableCourses.map((course) => course.course_name)}
-                    value={formData.course_enrolled}  // 👈 keep formData field name separate
-                    onSelect={(value) =>
-                      setFormData({ ...formData, course_enrolled: value })
-                    }
+                    value={formData.course_enrolled}
+                    onSelect={(value) => {
+                      const selectedCourse = availableCourses.find(
+                        (course) => course.course_name === value
+                      );
+                      setFormData({
+                        ...formData,
+                        course_enrolled: value,
+                        course_price: selectedCourse ? selectedCourse.price : "", // ✅ add this
+                      });
+                    }}
+
                   />
 
                   {errors.course_enrolled && (
@@ -856,6 +867,22 @@ export default function StudentAddForm() {
                 </div>
               </div>
 
+
+              {/* Course Price */}
+              <div className="space-y-2">
+                <Label>Course Price</Label>
+                <div className="relative">
+                  <Input
+                    type="text"
+                    value={formData.course_price}
+                    readOnly
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-gray-100 text-gray-700 cursor-not-allowed"
+                  />
+                </div>
+              </div>
+
+
+              {/* Batch */}
               <div className="space-y-2">
                 <Label>Batch</Label>
                 <div className="relative">

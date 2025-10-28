@@ -5,11 +5,9 @@ import AppLayout from "./layout/AppLayout";
 import Home from "./pages/Dashboard/Home";
 import AllCourses from "./components/Courses/AllCourses";
 import CourseDetail from "./components/Courses/Coursesdetails";
-import AllPricing from "./components/Pricing/allPricing";
+// import AllPricing from "./components/Pricing/allPricing";
 import UserProfiles from "./pages/UserProfiles";
 import Calendar from "./pages/Calendar";
-
-
 import Studentlist from "./pages/studentlist/studentlist";
 import FormElements from "./pages/Forms/FormElements";
 import ContactGrid from "./components/ContactGrid/ContactGrid";
@@ -36,10 +34,7 @@ import Blank from "./pages/Blank";
 import Studentcertification from "./components/studentlist/CertificateStatus";
 import StudentEditForm from "./components/form/editstudentform/editstudentform.tsx";
 import ProtectedRoute from "./ProtectedRoute.tsx";
-// import { Provider } from "react-redux";
 import Studentpdfdownload from "./components/studentpdfdownload/pdfdownload.tsx";
-// import { store } from "./redux/store";
-
 
 export default function App() {
   return (
@@ -49,7 +44,6 @@ export default function App() {
       <Router>
         <ScrollToTop />
         <Routes>
-          {/* Protected Routes (inside AppLayout) */}
           <Route
             element={
               <ProtectedRoute>
@@ -60,7 +54,7 @@ export default function App() {
             <Route index path="/" element={<Home />} />
             <Route path="/Courses" element={<AllCourses />} />
             <Route path="/course/:id" element={<CourseDetail />} />
-            <Route path="/Pricing" element={<AllPricing />} />
+            {/* <Route path="/Pricing" element={<AllPricing />} /> */}
             <Route path="/profile" element={<UserProfiles />} />
             <Route path="/calendar" element={<Calendar />} />
             <Route path="/blank" element={<Blank />} />
@@ -95,6 +89,5 @@ export default function App() {
         </Routes>
       </Router>
     </>
-    // </Provider>
   );
 }

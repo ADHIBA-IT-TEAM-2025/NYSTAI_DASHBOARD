@@ -1,8 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Download } from 'lucide-react';
 
-
-
 interface Student {
   student_id: number;
   name: string;
@@ -22,6 +20,7 @@ interface Student {
   year_of_passed: string;
   experience: string;
   course_enrolled: string;
+  course_price: string;
   batch: string;
   tutor: string;
   studentregisternumber: string;
@@ -116,17 +115,17 @@ export default function Studentpdfdownload() {
           <div className="p-8">
             <div className="flex justify-between items-start mb-6 pb-6 border-b-2 border-gray-300">
               <div className="flex-1">
-                <div className="mb-2">
+                {/* <div className="mb-2">
                   <span className="font-semibold">Registration No:</span>
                   <span className="ml-2">{student.studentregisternumber}</span>
-                </div>
+                </div> */}
                 <div className="mb-2">
                   <span className="font-semibold">Course:</span>
                   <span className="ml-2">{student.course_enrolled}</span>
                 </div>
                 <div className="mb-2">
                   <span className="font-semibold">Course Price:</span>
-                  {/* <span className="ml-2">{student.course_enrolled}</span> */}
+                  <span className="ml-2">{student.course_price}</span>
                 </div>
                 <div>
                   <span className="font-semibold">Batch:</span>

@@ -28,7 +28,7 @@ const navItems: NavItem[] = [
   { icon: <LayoutGrid />, name: "Overview", path: "/", matchPaths: ["/"] },
   { icon: <BookMarked />, name: "Courses", path: "/Courses", matchPaths: ["/courses", "/course/"] },
   { icon: <Users />, name: "Student List", path: "/studentlist", matchPaths: ["/studentlist"] },
-  { icon: <BadgeDollarSign />, name: "Course Pricing", path: "/Pricing", matchPaths: ["/pricing"] },
+  // { icon: <BadgeDollarSign />, name: "Course Pricing", path: "/Pricing", matchPaths: ["/pricing"] },
   { icon: <Phone />, name: "Contact", path: "/ContactGrid", matchPaths: ["/contactgrid"] },
   { icon: <GraduationCap />, name: "Trainers / Faculty", path: "/Trainers", matchPaths: ["/trainers"] },
 ];
