@@ -26,20 +26,12 @@ interface Course {
 }
 
 interface EditErrors {
-    course_id?: string;
-    course_name: string;
-    course_duration: string;
-    card_overview: string;
+    name?: string;
+    duration?: string;
+    overview?: string;
     image_url?: string;
-    price?: number;
-    point_1?: string;
-    point_2?: string;
-    point_3?: string;
-    point_4?: string;
-    point_5?: string;
-    point_6?: string;
-    point_7?: string;
 }
+
 
 export default function CourseDetail() {
     const { id } = useParams<{ id: string }>();
@@ -51,14 +43,14 @@ export default function CourseDetail() {
     const [isEditOpen, setIsEditOpen] = useState(false);
     const [editName, setEditName] = useState("");
     const [editPrice, setEditPrice] = useState("");
-    const [editPoints, setEditPoints] = useState({
+    type Points = Record<`point_${number}`, string>;
+
+    const [editPoints, setEditPoints] = useState<Points>({
         point_1: "",
         point_2: "",
         point_3: "",
         point_4: "",
         point_5: "",
-        point_6: "",
-        point_7: "",
     });
 
     const [editDuration, setEditDuration] = useState("");
@@ -69,6 +61,7 @@ export default function CourseDetail() {
         overview: "",
         image_url: "",
     });
+
     const [editFile, setEditFile] = useState<File | null>(null);
     const [editFileUrl, setEditFileUrl] = useState<string | null>(null);
     const [saving, setSaving] = useState(false);
@@ -438,20 +431,22 @@ export default function CourseDetail() {
                                                             />
                                                         </div>
 
-                                                        {[1, 2, 3, 4, 5].map((i) => (
-                                                            <div key={i} className="lg:col-span-2">
-                                                                <Label className="mb-3">Point {i}</Label>
-                                                                <Input
-                                                                    type="text"
-                                                                    placeholder={`Point ${i}`}
-                                                                    value={editPoints[`point_${i}`]}
-                                                                    onChange={(e) =>
-                                                                        setEditPoints((prev) => ({ ...prev, [`point_${i}`]: e.target.value }))
-                                                                    }
-                                                                />
-                                                            </div>
-                                                        ))}
-
+                                                        {[1, 2, 3, 4, 5].map((i) => {
+                                                            const key = `point_${i}` as keyof Points;
+                                                            return (
+                                                                <div key={i} className="lg:col-span-2">
+                                                                    <Label className="mb-3">Point {i}</Label>
+                                                                    <Input
+                                                                        type="text"
+                                                                        placeholder={`Point ${i}`}
+                                                                        value={editPoints[key]}
+                                                                        onChange={(e) =>
+                                                                            setEditPoints((prev) => ({ ...prev, [key]: e.target.value }))
+                                                                        }
+                                                                    />
+                                                                </div>
+                                                            );
+                                                        })}
 
                                                         <div className="lg:col-span-2">
                                                             <Label className="mb-3">Upload Images</Label>
@@ -534,7 +529,8 @@ export default function CourseDetail() {
 
                                                     {/* List all non-null points dynamically */}
                                                     <ul className="list-disc pl-6 mt-3 space-y-1 text-gray-600 dark:text-gray-400">
-                                                        {Array.from({ length: 7 }, (_, i) => course[`point_${i + 1}`])
+                                                        {Array.from({ length: 7 }, (_, i) => (course as any)[`point_${i + 1}`])
+
                                                             .filter(Boolean)
                                                             .map((point, index) => (
                                                                 <li key={index}>{point}</li>

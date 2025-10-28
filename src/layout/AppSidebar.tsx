@@ -8,7 +8,6 @@ import {
 import {
   LayoutGrid,
   Users,
-  BadgeDollarSign,
   Phone,
   GraduationCap,
   BookMarked,

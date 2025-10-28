@@ -413,7 +413,7 @@ export default function AllCourses() {
                                             </div>
                                         </div>
                                         <Link
-                                            to={`/course/${course.course_id}`}
+                                            to={`/course/${course._id}`}
                                             className="flex justify-center items-center gap-2 rounded-2xl border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-100 hover:text-gray-800 dark:border-gray-700 dark:bg-white dark:text-gray-800 dark:hover:bg-white/90"
                                         >
                                             Learn More
