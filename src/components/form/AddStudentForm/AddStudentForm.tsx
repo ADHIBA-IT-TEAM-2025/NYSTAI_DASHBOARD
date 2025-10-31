@@ -290,8 +290,11 @@ export default function StudentAddForm() {
       setIsSubmitting(false);
     }
   };
+  const [availableCourses, setAvailableCourses] = useState<
+    { id: number; course_name: string; price: string }[]
+  >([]);
 
-  const [availableCourses, setAvailableCourses] = useState<{ id: number; course_name: string }[]>([]);
+
 
   useEffect(() => {
     const fetchCourses = async () => {
