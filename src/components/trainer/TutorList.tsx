@@ -465,7 +465,7 @@ function ProfileCards() {
                     label="Select Expertise"
                     value={formData.expertise}
                     onSelect={(value) => setFormData((prev) => ({ ...prev, expertise: value }))}
-                    apiEndpoint="https://nystai-backend.onrender.com/Allcourses/get-all-courses"
+                    apiEndpoint="https://nystai-backend.onrender.com/Allcourses/all-courses-with-plans"
                   />
                 </div>
               </div>

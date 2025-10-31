@@ -218,7 +218,7 @@ export default function AllCourses() {
 
 
     useEffect(() => {
-        fetch("https://nystai-backend.onrender.com/allcourses/get-all-courses")
+        fetch("https://nystai-backend.onrender.com/Allcourses/all-courses-with-plans")
             .then(res => res.json())
             .then(data => {
                 console.log("GET /get-all-courses response:", data);
@@ -406,7 +406,7 @@ export default function AllCourses() {
                                                 <span className="text-ml font-semibold text-gray-700 dark:text-white/90">Duration:</span>{' '}
                                                 <span className="text-sm text-gray-800 dark:text-gray-300">{course.course_duration} Days</span>
                                             </div>
-    
+
                                             <div className="mb-4">
                                                 <span className="text-ml font-semibold text-gray-700 dark:text-white/90">Overview:</span>{' '}
                                                 <span className="text-sm text-gray-600 dark:text-gray-400">{truncateText(course.card_overview, 20)}</span>
@@ -418,7 +418,7 @@ export default function AllCourses() {
                                         >
                                             Learn More
                                         </Link>
-                                        
+
                                     </div>
                                 </div>
                             ))

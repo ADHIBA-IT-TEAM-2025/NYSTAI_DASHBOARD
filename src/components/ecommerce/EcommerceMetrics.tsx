@@ -97,7 +97,7 @@ export default function EcommerceMetrics() {
 }
 
 function CourseCard() {
-  const [selectedCourse, setSelectedCourse] = useState<string>("IOT");
+  const [selectedCourse, setSelectedCourse] = useState<string>("");
   const [count, setCount] = useState<number>(0);
 
   useEffect(() => {
@@ -147,7 +147,7 @@ function UserDropdown({ selectedCourse, setSelectedCourse }: UserDropdownProps) 
   useEffect(() => {
     const fetchCourses = async () => {
       try {
-        const response = await axios.get("https://nystai-backend.onrender.com/Allcourses/get-all-courses");
+        const response = await axios.get("https://nystai-backend.onrender.com/Allcourses/all-courses-with-plans");
         // Extract the course_name field from the response
         const courseList = response.data.data.map((c: any) => c.course_name);
         setCourses(courseList);

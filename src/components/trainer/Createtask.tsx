@@ -26,23 +26,24 @@ export default function Createtask() {
 
     const [courses, setCourses] = useState<{ id: number; course_name: string }[]>([]);
 
-    useEffect(() => {
-        const fetchCourses = async () => {
-            try {
-                const response = await fetch("https://nystai-backend.onrender.com/Allcourses/get-all-courses");
-                const result = await response.json();
-                if (result.success) {
-                    setCourses(result.data); // set courses into state
-                } else {
-                    console.error("Failed to fetch courses");
-                }
-            } catch (err) {
-                console.error("Error fetching courses:", err);
+  useEffect(() => {
+    const fetchCourses = async () => {
+        try {
+            const response = await fetch("https://nystai-backend.onrender.com/Allcourses/all-courses-with-plans");
+            const result = await response.json();
+            if (result.success) {
+                setCourses(result.data); // set courses into state
+            } else {
+                console.error("Failed to fetch courses");
             }
-        };
+        } catch (err) {
+            console.error("Error fetching courses:", err);
+        }
+    };
 
-        fetchCourses();
-    }, []);
+    fetchCourses();
+}, []);
+
 
     const validateForm = () => {
         let newErrors: any = {};

@@ -1,4 +1,4 @@
-import {faChevronDown} from "@fortawesome/free-solid-svg-icons";
+import { faChevronDown } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useDropzone } from "react-dropzone";
@@ -169,7 +169,7 @@ export default function AddNewTutor() {
         const fetchCourses = async () => {
             try {
                 const res = await fetch(
-                    "https://nystai-backend.onrender.com/Allcourses/get-all-courses"
+                    "https://nystai-backend.onrender.com/Allcourses/all-courses-with-plans"
                 );
                 const data = await res.json();
                 if (data.success && Array.isArray(data.data)) {
@@ -605,6 +605,7 @@ function FileUploadBox({ onFileSelect }: { onFileSelect: (file: File | null) => 
         </div>
     );
 }
+
 
 
 
