@@ -291,13 +291,7 @@ export default function StudentAddForm() {
     }
   };
 
-  type CourseOption = {
-    id: number | string;
-    course_name: string;
-    price?: string;
-  };
-
-  const [availableCourses, setAvailableCourses] = useState<CourseOption[]>([]);
+  const [availableCourses, setAvailableCourses] = useState<{ id: number; course_name: string }[]>([]);
 
   useEffect(() => {
     const fetchCourses = async () => {
@@ -861,9 +855,10 @@ export default function StudentAddForm() {
                       setFormData({
                         ...formData,
                         course_enrolled: value,
-                        course_price: selectedCourse?.price || "",
+                        course_price: selectedCourse ? selectedCourse.price : "", // ✅ add this
                       });
                     }}
+
                   />
 
                   {errors.course_enrolled && (

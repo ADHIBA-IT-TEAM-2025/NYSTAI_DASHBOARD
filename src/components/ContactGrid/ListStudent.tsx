@@ -255,12 +255,14 @@ function ActionDropdown({
                 <div className="absolute right-0 z-50 mt-2 w-[200px] rounded-2xl border border-gray-200 bg-white p-3 shadow-xl dark:border-gray-800 dark:bg-gray-dark">
                     <ul className="flex flex-col gap-1">
                         <li>
-                            <button
-                                onClick={onEdit}
-                                className="flex w-full font-normal text-left px-3 py-2 text-gray-500 rounded-lg hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
-                            >
-                                Edit Detailss
-                            </button>
+                            <Link to={`/Editstudentform/${studentId}`}>
+                                <button
+                                    onClick={onEdit}
+                                    className="flex w-full font-normal text-left px-3 py-2 text-gray-500 rounded-lg hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
+                                >
+                                    Edit Detailss
+                                </button>
+                            </Link>
                         </li>
                         <li>
                             <button

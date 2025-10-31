@@ -12,6 +12,7 @@ import axios from "axios";
 import { Link } from "react-router";
 import { Modal } from "../ui/modal";
 import toast from "react-hot-toast";
+import { createPortal } from "react-dom";
 
 type Student = {
   student_id: number;
@@ -378,13 +379,16 @@ function ActionDropdown({
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
 
   // Close dropdown when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (
         dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
+        !dropdownRef.current.contains(event.target as Node) &&
+        !buttonRef.current?.contains(event.target as Node)
       ) {
         setIsOpen(false);
       }
@@ -394,58 +398,81 @@ function ActionDropdown({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // Calculate menu position when opened
+  useEffect(() => {
+    if (isOpen && buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      setMenuPosition({
+        top: rect.bottom + window.scrollY + 6, // little space
+        left: rect.right + window.scrollX - 200, // align right (width ~200px)
+      });
+    }
+  }, [isOpen]);
+
   return (
-    <div className="relative inline-block text-left" ref={dropdownRef}>
+    <div className="relative inline-block text-left">
       <button
-        onClick={() => setIsOpen((prev) => !prev)} // toggle on click
+        ref={buttonRef}
+        onClick={() => setIsOpen((prev) => !prev)}
         className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-white/10"
       >
         <MoreVertical className="w-5 h-5 text-gray-600 dark:text-gray-300" />
       </button>
 
-      {isOpen && (
-        <div className="absolute right-0 z-50 mt-2 w-[200px] rounded-2xl border border-gray-200 bg-white p-3 shadow-xl dark:border-gray-800 dark:bg-gray-dark">
-          <ul className="flex flex-col gap-1">
-            <li>
-              <Link to={`/Editstudentform/${studentId}`}>
+      {isOpen &&
+        createPortal(
+          <div
+            ref={dropdownRef}
+            className="absolute z-[9999] w-[200px] rounded-2xl border border-gray-200 bg-white p-3 shadow-xl"
+            style={{
+              position: "absolute",
+              top: menuPosition.top,
+              left: menuPosition.left,
+            }}
+          >
+            <ul className="flex flex-col gap-1">
+              <li>
+                <Link to={`/Editstudentform/${studentId}`}>
+                  <button
+                    onClick={onEdit}
+                    className="flex w-full font-normal text-left px-3 py-2 text-gray-500 rounded-lg hover:bg-gray-100 hover:text-gray-700"
+                  >
+                    Edit Details
+                  </button>
+                </Link>
+              </li>
+              <li>
                 <button
-                  onClick={onEdit}
-                  className="flex w-full font-normal text-left px-3 py-2 text-gray-500 rounded-lg hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
+                  onClick={onDelete}
+                  className="flex w-full font-normal text-left px-3 py-2 text-gray-500 rounded-lg hover:bg-gray-100 hover:text-gray-700"
                 >
-                  Edit Details
+                  Delete Student
                 </button>
-              </Link>
-            </li>
-            <li>
-              <button
-                onClick={onDelete}
-                className="flex w-full font-normal text-left px-3 py-2 text-gray-500 rounded-lg hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
-              >
-                Delete Student
-              </button>
-            </li>
-            <li>
-              <Link
-                to={`/student/${studentId}`}
-                className="flex w-full font-normal text-left px-3 py-2 text-gray-500 rounded-lg hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
-              >
-                Certificate Status
-              </Link>
-            </li>
-            <li>
-              <Link
-                to={`/Student-PDF/${studentId}`}
-                className="flex w-full font-normal text-left px-3 py-2 text-gray-500 rounded-lg hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
-              >
-                PDF View
-              </Link>
-            </li>
-          </ul>
-        </div>
-      )}
+              </li>
+              <li>
+                <Link
+                  to={`/student/${studentId}`}
+                  className="flex w-full font-normal text-left px-3 py-2 text-gray-500 rounded-lg hover:bg-gray-100 hover:text-gray-700"
+                >
+                  Certificate Status
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to={`/Student-PDF/${studentId}`}
+                  className="flex w-full font-normal text-left px-3 py-2 text-gray-500 rounded-lg hover:bg-gray-100 hover:text-gray-700"
+                >
+                  PDF View
+                </Link>
+              </li>
+            </ul>
+          </div>,
+          document.body
+        )}
     </div>
   );
 }
+
 
 
 
